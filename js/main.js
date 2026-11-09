@@ -11,7 +11,7 @@ const Game = (() => {
   const STAGE_H = 1080;
 
   const screens = {};
-  const data = { characters: [], npcs: [], stages: {}, skills: [], enemies: [], tutorials: {}, roomTalk: {}, promises: {}, growth: {} };
+  const data = { characters: [], npcs: [], stages: {}, skills: [], enemies: [], tutorials: {}, roomTalk: {}, promises: {}, growth: {}, counsel: {} };
   let stageEl = null;
   let currentId = null;
   let disposeCurrent = null;
@@ -241,7 +241,7 @@ const Game = (() => {
   }
 
   async function loadData() {
-    [data.characters, data.npcs, data.stages, data.skills, data.enemies, data.tutorials, data.roomTalk, data.promises, data.growth] = await Promise.all([
+    [data.characters, data.npcs, data.stages, data.skills, data.enemies, data.tutorials, data.roomTalk, data.promises, data.growth, data.counsel] = await Promise.all([
       loadJSON('data/characters.json'),
       loadJSON('data/npcs.json'),
       loadJSON('data/stages.json'),
@@ -251,6 +251,7 @@ const Game = (() => {
       loadJSON('data/room_talk.json'),
       loadJSON('data/promises.json'),
       loadJSON('data/growth.json'),
+      loadJSON('data/counsel.json'),
     ]);
   }
 
@@ -290,14 +291,6 @@ const Game = (() => {
 })();
 
 /* ===== 간단한 화면들 (본격적으로 만들 때 각자 파일로 분리) ===== */
-
-Game.registerScreen('counsel', {
-  title: '방과후 상담',
-  background: 'classroom',
-  render(s) {
-    s.addButton('부실로', () => Game.go('room'), { primary: true });
-  },
-});
 
 Game.registerScreen('attendance', {
   title: '출석부',

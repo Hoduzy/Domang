@@ -25,6 +25,11 @@
  *   bonds: { "hayun+seoyeon": 0, ... }  부원 두 명 사이의 유대. 아이디를 정해진 순서로 이은 키 (15쌍)
  *   memoryFragments: { hayun: ["fragment_id", ...], ... }  찾은 기억 조각
  *   flags: { prologue_first_answer: "unsure", ... }  대사 선택 결과 등 스토리 기록 (대사 파일의 remember)
+ *   counsel: {                         방과후 상담
+ *     run: null | { id, day, stats: { mood, trust, confidence }, lowDays, rate, cap, plan: [활동 15칸] },
+ *     sorry: { 아이디: true },          상담이 중단됐던 아이 (다음 회차 시작 때 사과)
+ *     finished: 0                       끝까지 마친 회차 수
+ *   },
  *   materials: 0                       등불 조각 (스킬 강화 재료)
  *   formation: { "1": ["seoyeon", "yuna", "jiyu"] }  장마다 마지막으로 고른 편성
  *   promises: [                        얻은 약속
@@ -81,6 +86,7 @@ const Save = (() => {
       memoryFragments,
       flags: {},
       materials: 0,
+      counsel: { run: null, sorry: {}, finished: 0 },
       formation: {},
       promises: [],
     };
@@ -175,6 +181,30 @@ const Save = (() => {
 
     d.materials = int(raw.materials, 0, 0);
 
+    if (isObj(raw.counsel)) {
+      const c = raw.counsel;
+      const r = c.run;
+      if (isObj(r) && IDS.includes(renameId(r.id)) && isObj(r.stats)) {
+        d.counsel.run = {
+          id: renameId(r.id),
+          day: int(r.day, 1, 1, 30),
+          stats: {
+            mood: num(r.stats.mood, 0, 0, 100),
+            trust: num(r.stats.trust, 0, 0, 100),
+            confidence: num(r.stats.confidence, 0, 0, 100),
+          },
+          lowDays: int(r.lowDays, 0, 0),
+          rate: num(r.rate, 0.35, 0, 2),
+          cap: PROMISE_GRADES.includes(r.cap) ? r.cap : 'bronze',
+          plan: Array.isArray(r.plan) ? r.plan.filter((x) => typeof x === 'string' || x === null).slice(0, 15) : [],
+        };
+      }
+      if (isObj(c.sorry)) {
+        for (const [id, v] of Object.entries(c.sorry)) if (v && IDS.includes(renameId(id))) d.counsel.sorry[renameId(id)] = true;
+      }
+      d.counsel.finished = int(c.finished, 0, 0);
+    }
+
     if (isObj(raw.formation)) {
       for (const [ch, list] of Object.entries(raw.formation)) {
         if (/^[0-6]$/.test(ch) && Array.isArray(list)) {
@@ -192,6 +222,7 @@ const Save = (() => {
           grade: pr.grade,
           owner: pr.owner,
           equippedBy: IDS.includes(pr.equippedBy) ? pr.equippedBy : null,
+          line: typeof pr.line === 'string' ? pr.line : '',
           obtainedAt: num(pr.obtainedAt, d.createdAt),
         }));
     }

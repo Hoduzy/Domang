@@ -1,0 +1,350 @@
+{
+  "_note": "방과후 상담 수치. 활동의 mood/trust/confidence는 '+' 개수 (−1, 1, 2). 실제 증가량 = 개수 × unit × 성장률. 힘들어하는 활동은 기분 효과가 (원래 기분 효과 중 음수 부분 + hardMood)로 바뀐다. 좋아하는 활동은 오르는 효과가 favoriteMult배.",
+  "days": 30,
+  "slots": 15,
+  "startHour": 16,
+  "slotMinutes": 20,
+  "unit": 0.4,
+  "stamina": {
+    "max": 100,
+    "rest": 20,
+    "bands": [
+      {
+        "minLevel": 1,
+        "cost": 15,
+        "name": "낮음"
+      },
+      {
+        "minLevel": 10,
+        "cost": 11,
+        "name": "중간"
+      },
+      {
+        "minLevel": 25,
+        "cost": 8,
+        "name": "높음"
+      }
+    ]
+  },
+  "activities": [
+    {
+      "id": "study",
+      "name": "같이 공부하기",
+      "mood": -1,
+      "trust": 1,
+      "confidence": 2
+    },
+    {
+      "id": "walk",
+      "name": "운동장 산책",
+      "mood": 1,
+      "trust": 0,
+      "confidence": 1
+    },
+    {
+      "id": "snack",
+      "name": "매점 간식",
+      "mood": 2,
+      "trust": 0,
+      "confidence": 0
+    },
+    {
+      "id": "listen",
+      "name": "이야기 들어주기",
+      "mood": 0,
+      "trust": 2,
+      "confidence": 0
+    },
+    {
+      "id": "play",
+      "name": "같이 놀기",
+      "mood": 2,
+      "trust": 1,
+      "confidence": 0
+    },
+    {
+      "id": "stay",
+      "name": "그냥 곁에 있기",
+      "mood": 0,
+      "trust": 1,
+      "confidence": 0,
+      "costRate": 0.5
+    },
+    {
+      "id": "rest",
+      "name": "쉬기 (엎드려 자기)",
+      "mood": 0,
+      "trust": 0,
+      "confidence": 0,
+      "rest": true
+    }
+  ],
+  "stats": [
+    {
+      "id": "mood",
+      "name": "기분",
+      "promise": "smile"
+    },
+    {
+      "id": "trust",
+      "name": "신뢰",
+      "promise": "trust"
+    },
+    {
+      "id": "confidence",
+      "name": "자신감",
+      "promise": "tomorrow"
+    }
+  ],
+  "favoriteMult": 2,
+  "hardMood": -1,
+  "hardOkDependencyStage": 4,
+  "preferences": {
+    "hayun": {
+      "favorite": "listen",
+      "hard": "play"
+    },
+    "seoyeon": {
+      "favorite": "study",
+      "hard": "snack"
+    },
+    "dahyeon": {
+      "favorite": "play",
+      "hard": "walk"
+    },
+    "yuna": {
+      "favorite": "snack",
+      "hard": "stay"
+    },
+    "jiyu": {
+      "favorite": "walk",
+      "hard": "study"
+    },
+    "eunchae": {
+      "favorite": "stay",
+      "hard": "listen"
+    }
+  },
+  "growth": {
+    "locked": {
+      "label": "장 클리어 전",
+      "rate": 0.35,
+      "cap": "bronze"
+    },
+    "cleared": {
+      "label": "장 클리어 후",
+      "rate": 0.65,
+      "cap": "silver"
+    },
+    "trusted": {
+      "label": "장 클리어 + 의존도 높음",
+      "rate": 1.0,
+      "cap": "gold",
+      "dependencyStage": 4
+    }
+  },
+  "grades": [
+    {
+      "grade": "bronze",
+      "min": 0
+    },
+    {
+      "grade": "silver",
+      "min": 40
+    },
+    {
+      "grade": "gold",
+      "min": 70
+    }
+  ],
+  "penalty": {
+    "_note": "하루가 끝날 때 가장 낮은 스탯이 가장 높은 스탯보다 gap 이상 낮고 ratio배 미만이면 '방치' 상태. 연속 일수에 따라 경고 → 성장 둔화 → 상담 중단",
+    "startDay": 4,
+    "gap": 15,
+    "ratio": 0.4,
+    "warnDays": 1,
+    "slowDays": 3,
+    "stopDays": 6,
+    "slowRate": 0.5
+  },
+  "dependencyPerDay": 1,
+  "eventChance": 0.2,
+  "events": [
+    {
+      "id": "rain",
+      "narration": "(창밖에 갑자기 비가 쏟아진다)",
+      "line": "…우산 없는데.",
+      "choices": [
+        {
+          "text": "\"내 우산 같이 쓰고 가자.\"",
+          "trust": 2
+        },
+        {
+          "text": "\"비 그칠 때까지 여기 있자.\"",
+          "mood": 2
+        }
+      ]
+    },
+    {
+      "id": "test",
+      "narration": "(가방에서 구겨진 시험지 한 장이 떨어진다)",
+      "line": "아, 그거… 보지 마세요.",
+      "choices": [
+        {
+          "text": "\"같이 틀린 거 다시 볼까?\"",
+          "confidence": 2,
+          "mood": -1
+        },
+        {
+          "text": "(못 본 척 주워서 건넨다)",
+          "trust": 2
+        }
+      ]
+    },
+    {
+      "id": "sale",
+      "narration": "(매점 아주머니가 마감 전이라며 빵을 하나 더 얹어 준다)",
+      "line": "선생님, 이거 둘이 먹기엔 많은데요.",
+      "choices": [
+        {
+          "text": "\"부실 애들이랑 나눠 먹자.\"",
+          "mood": 2
+        },
+        {
+          "text": "\"반씩 나눠 먹자.\"",
+          "trust": 1,
+          "mood": 1
+        }
+      ]
+    },
+    {
+      "id": "sunset",
+      "narration": "(창밖으로 노을이 진다)",
+      "line": "…예쁘다.",
+      "choices": [
+        {
+          "text": "\"잠깐 나가서 볼까?\"",
+          "mood": 1,
+          "confidence": 1
+        },
+        {
+          "text": "\"여기서 같이 보자.\"",
+          "trust": 2
+        }
+      ]
+    },
+    {
+      "id": "note",
+      "narration": "(책상 위에 누가 두고 간 쪽지가 있다. '내일도 와?')",
+      "line": "…이거 누가 쓴 거예요?",
+      "choices": [
+        {
+          "text": "\"글쎄. 답장 써 볼래?\"",
+          "confidence": 2
+        },
+        {
+          "text": "\"너 기다리는 사람이 있나 보다.\"",
+          "trust": 1,
+          "mood": 1
+        }
+      ]
+    }
+  ],
+  "lines": {
+    "hayun": {
+      "start": "…상담이요? 저랑요? …네.",
+      "home": [
+        "오늘… 시간 빨리 갔어요.",
+        "내일도 4시에 와도 돼요?",
+        "…오늘은 말을 좀 많이 한 것 같아요."
+      ],
+      "tired": "…조금 졸려요. 그래도 괜찮았어요.",
+      "warn": "…요즘 좀, 아무것도 하기 싫어요.",
+      "promise": {
+        "smile": "내일은 조금 더 웃어 볼게요.",
+        "trust": "내일은 제가 먼저 인사할게요.",
+        "tomorrow": "내일도 올게요. 꼭요."
+      }
+    },
+    "seoyeon": {
+      "start": "상담이요? 효율적으로 해 주세요. …농담이에요.",
+      "home": [
+        "오늘은 계획대로 됐네요.",
+        "…생각보다 나쁘지 않았어요.",
+        "내일 일정도 미리 알려 주세요."
+      ],
+      "tired": "피곤하네요. 그래도 해야 할 건 했어요.",
+      "warn": "요즘 계속 뭔가 빠진 것 같아요. 계산이 안 맞아요.",
+      "promise": {
+        "smile": "틀려도 웃는 연습, 해 볼게요.",
+        "trust": "모르는 건 모른다고 말할게요. 선생님한테는요.",
+        "tomorrow": "다음 시험도, 그 다음도 그냥 한 번씩이에요."
+      }
+    },
+    "dahyeon": {
+      "start": "상담요? 뭐… 좋아요. 앉아서 하는 거면요.",
+      "home": [
+        "오늘 재밌었어요. 진짜로요.",
+        "다리는 괜찮아요. 걱정 마세요.",
+        "내일은 뭐 해요?"
+      ],
+      "tired": "아, 오늘 좀 무리했다. 그래도 좋았어요.",
+      "warn": "…요즘 그냥, 다 시시해요.",
+      "promise": {
+        "smile": "웃는 건 자신 있어요. 이제 진짜로요.",
+        "trust": "힘들면 힘들다고 할게요. 숨기지 않고.",
+        "tomorrow": "못 뛰어도, 앞으로는 갈 거예요."
+      }
+    },
+    "yuna": {
+      "start": "상담이요?! 좋아요 좋아요! 뭐 해요 우리?",
+      "home": [
+        "오늘도 완전 재밌었다! …진짜예요.",
+        "선생님, 내일도 사탕 가져올게요!",
+        "…오늘은 좀 조용해도 괜찮았어요."
+      ],
+      "tired": "헤헤, 오늘 좀 지쳤다. 비밀이에요.",
+      "warn": "…아, 아니에요. 괜찮아요! 괜찮은데…",
+      "promise": {
+        "smile": "억지로 말고, 진짜로 웃을게요.",
+        "trust": "안 괜찮을 땐 안 괜찮다고 할게요.",
+        "tomorrow": "내일도 모레도, 여기 올게요."
+      }
+    },
+    "jiyu": {
+      "start": "…상담이요? 늦게까지 있어도 되는 거면요.",
+      "home": [
+        "…벌써 9시네요.",
+        "오늘은… 좀 괜찮았어요.",
+        "…우산, 같이 쓰고 갈래요?"
+      ],
+      "tired": "…조금 피곤해요. 그래도 여기가 좋아요.",
+      "warn": "…요즘은 여기 와도 별로예요. 죄송해요.",
+      "promise": {
+        "smile": "…웃는 거, 조금씩 해 볼게요.",
+        "trust": "무슨 일 있으면, 말할게요. 선생님한테는.",
+        "tomorrow": "내일도 집에 가기 전에 들를게요."
+      }
+    },
+    "eunchae": {
+      "start": "…무슨 일 있었냐고 안 물어보는 거면, 할게요.",
+      "home": [
+        "…화분, 오늘 새 잎 났어요.",
+        "오늘은 그냥, 괜찮았어요.",
+        "…내일도 물 주러 올 거예요."
+      ],
+      "tired": "…좀 지쳤어요. 그래도 나쁘진 않았어요.",
+      "warn": "…요즘 아무것도 안 하고 싶어요.",
+      "promise": {
+        "smile": "…가끔은 웃어도 되는 거죠. 그렇게 할게요.",
+        "trust": "언젠가 그 애 얘기, 선생님한테 할게요.",
+        "tomorrow": "내일도 물 줄게요. 화분한테도, 저한테도."
+      }
+    }
+  },
+  "stopLine": "오늘은 혼자 있고 싶어요",
+  "stopNarration": "(조용히 가방을 메고 먼저 부실을 나선다)",
+  "stopTeacher": "…쉬어도 돼. 내일도 불은 켜둘게.",
+  "sorryLine": "지난번엔 미안했어요",
+  "sorryTeacher": "괜찮아. 다시 와 줘서 고마워."
+}
