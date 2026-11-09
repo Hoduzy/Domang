@@ -1,0 +1,23 @@
+[
+  {"bg": "staff_room", "show": [], "narration": "[교무실 / 오후 늦게. 창밖으로 노을이 들어온다]"},
+  {"speaker": "교감", "face": "default", "text": "첫날부터 미안하네요. 다들 이 동아리는 못 맡겠다고 해서."},
+  {"speaker": "선생님", "text": "무슨 동아리인데요?"},
+  {"speaker": "교감", "text": "서류상 이름은 '방과후 보건부'예요. 하는 활동은 없고요. 이름도, 뭘 할지도 선생님 마음대로 정하셔도 돼요."},
+  {"narration": "(교감이 서류철 하나를 건넨다. 표지에 이름 여섯 개가 적혀 있다)"},
+  {"speaker": "교감", "text": "이 아이들은… 올해 한 번씩, 많이 힘들었던 아이들이에요. 학교가 할 수 있는 건 다 했고, 상담 선생님도 따로 만나고 있어요."},
+  {"speaker": "교감", "text": "선생님한테 바라는 건 하나예요. 방과후에 이 아이들이 갈 곳이 있게 해주는 거."},
+  {"choice": [{"text": "\"제가 뭘 해야 하는지 잘 모르겠어요.\"", "goto": "answer_unsure", "remember": {"prologue_first_answer": "unsure"}}, {"text": "\"알겠습니다. 해볼게요.\"", "goto": "answer_willing", "remember": {"prologue_first_answer": "willing"}}]},
+  {"label": "answer_unsure", "speaker": "교감", "text": "다들 몰라요. 아는 척하는 어른보다는 그게 나아요.", "goto": "club_room"},
+  {"label": "answer_willing", "speaker": "교감", "text": "너무 애쓰진 마세요. 선생님이 먼저 지치면 안 되니까."},
+  {"label": "club_room", "bg": "club_room", "show": [], "narration": "[별관 3층 끝 / 방과후 보건부 부실]"},
+  {"narration": "(문을 열자 먼지 냄새. 의자 여섯 개가 벽 쪽으로 밀려 있고, 화이트보드에는 지워지다 만 글씨가 남아 있다)"},
+  {"speaker": "선생님", "aside": "독백", "text": "아무도 안 왔네."},
+  {"narration": "(시계는 4시 30분. 5시가 되어도 아무도 오지 않는다)"},
+  {"speaker": "선생님", "aside": "독백", "text": "…기다린다고 오는 애들이 아니구나. 내가 가야겠다."},
+  {"narration": "(선생님이 서류철 표지의 '방과후 보건부'라는 글자를 한참 본다)"},
+  {"speaker": "선생님", "aside": "독백", "text": "보건부라니. 아픈 애들을 모아놨다고 써 붙인 것 같잖아."},
+  {"narration": "(펜을 꺼내 부실 문패의 이름을 지우고, 새로 적는다)"},
+  {"title": "쉼표부"},
+  {"speaker": "선생님", "aside": "독백", "text": "잠깐 쉬어 가는 곳. 지금은 그 정도면 충분하다."},
+  {"title": "스테이지 클리어 — 부원 명단 획득"}
+]

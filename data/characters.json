@@ -1,0 +1,8 @@
+[
+  {"id": "hayun", "name": "하윤", "grade": 1, "chapter": 1, "color": "#9d95ad", "colorName": "바랜 라벤더 회색", "role": "은신 딜러", "stats": {"hp": 820, "atk": 125, "spd": 108}, "skills": {"skill": "hayun_skill", "heart": "hayun_heart"}, "traits": {"stealthStart": true, "lonelyShakeMult": 2}, "weakness": "혼자 남으면 흔들림이 빨리 참"},
+  {"id": "seoyeon", "name": "서연", "grade": 3, "chapter": 2, "color": "#2c3e6b", "colorName": "남색과 흰색", "role": "분석 서포터", "stats": {"hp": 900, "atk": 70, "spd": 100}, "skills": {"skill": "seoyeon_skill", "heart": "seoyeon_heart"}, "traits": {}, "weakness": "공격력이 낮음"},
+  {"id": "dahyeon", "name": "다현", "grade": 2, "chapter": 3, "color": "#c98a5a", "colorName": "빛바랜 주황", "role": "속도 서포터", "stats": {"hp": 680, "atk": 95, "spd": 126}, "skills": {"skill": "dahyeon_skill", "heart": "dahyeon_heart"}, "traits": {}, "weakness": "오래 버티지 못함"},
+  {"id": "yuna", "name": "유나", "grade": 2, "chapter": 4, "color": "#f0a8c0", "colorName": "분홍과 레몬색", "role": "힐러", "stats": {"hp": 880, "atk": 85, "spd": 104}, "skills": {"skill": "yuna_skill", "heart": "yuna_heart"}, "traits": {}, "weakness": "자기 자신은 회복하지 못함"},
+  {"id": "jiyu", "name": "지유", "grade": 1, "chapter": 5, "color": "#2f5a5c", "colorName": "어두운 청록과 회색", "role": "탱커", "stats": {"hp": 1250, "atk": 80, "spd": 92}, "skills": {"skill": "jiyu_skill", "heart": "jiyu_heart"}, "traits": {"shakeMult": 1.5}, "weakness": "흔들림에 가장 약함"},
+  {"id": "eunchae", "name": "은채", "grade": 2, "chapter": 6, "color": "#5d8a62", "colorName": "차분한 초록과 노란색 포인트", "role": "소환 딜러", "stats": {"hp": 860, "atk": 110, "spd": 96}, "skills": {"skill": "eunchae_skill", "heart": "eunchae_heart"}, "traits": {}, "weakness": "준비에 한 턴이 걸림"}
+]

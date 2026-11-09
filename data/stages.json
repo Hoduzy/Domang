@@ -1,0 +1,417 @@
+{
+  "0": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "부임",
+      "file": "prologue_01",
+      "desc": "교감에게 동아리를 넘겨받고, 이름을 새로 붙인다."
+    },
+    {
+      "stage": 2,
+      "type": "story",
+      "title": "첫 만남",
+      "file": "prologue_02",
+      "desc": "여섯 명을 한 명씩 찾아가 처음 만난다."
+    },
+    {
+      "stage": 3,
+      "type": "story",
+      "title": "사고",
+      "file": "prologue_03",
+      "battle": true,
+      "desc": "비 오는 저녁, 정전과 함께 악몽에 떨어진다. 첫 전투."
+    },
+    {
+      "stage": 4,
+      "type": "story",
+      "title": "처음 잡은 손",
+      "file": "prologue_04",
+      "battle": true,
+      "desc": "협공과 붙잡기를 배우고 보스 '닫힌 문'과 싸운다."
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "귀환",
+      "file": "prologue_05",
+      "desc": "부실로 돌아와 화이트보드에 떠오른 이름을 본다."
+    }
+  ],
+  "chapterTitles": {
+    "0": "프롤로그",
+    "1": "아무도 돌아보지 않는 교실"
+  },
+  "1": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "악몽 진입",
+      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다."
+    },
+    {
+      "stage": 2,
+      "type": "battle",
+      "title": "첫 전투",
+      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투."
+    },
+    {
+      "stage": 3,
+      "type": "explore",
+      "title": "기억 조각",
+      "desc": "선택지로 길을 고르고 기억 조각을 찾는다."
+    },
+    {
+      "stage": 4,
+      "type": "battle",
+      "title": "과거의 기억",
+      "desc": "그 아이의 과거 기억이 적으로 나타난다."
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "처음 꺼낸 이야기",
+      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다."
+    },
+    {
+      "stage": 6,
+      "type": "battle",
+      "title": "고비",
+      "desc": "흔들림 공격이 강해지는 고비."
+    },
+    {
+      "stage": 7,
+      "type": "battle",
+      "title": "가장 아픈 기억",
+      "desc": "가장 아픈 기억과 마주한다."
+    },
+    {
+      "stage": 8,
+      "type": "story",
+      "title": "선생님의 대답",
+      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다."
+    },
+    {
+      "stage": 9,
+      "type": "battle",
+      "title": "부르는 목소리",
+      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다."
+    },
+    {
+      "stage": 10,
+      "type": "boss",
+      "title": "그 아이의 상처",
+      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다."
+    }
+  ],
+  "2": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "악몽 진입",
+      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다."
+    },
+    {
+      "stage": 2,
+      "type": "battle",
+      "title": "첫 전투",
+      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투."
+    },
+    {
+      "stage": 3,
+      "type": "explore",
+      "title": "기억 조각",
+      "desc": "선택지로 길을 고르고 기억 조각을 찾는다."
+    },
+    {
+      "stage": 4,
+      "type": "battle",
+      "title": "과거의 기억",
+      "desc": "그 아이의 과거 기억이 적으로 나타난다."
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "처음 꺼낸 이야기",
+      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다."
+    },
+    {
+      "stage": 6,
+      "type": "battle",
+      "title": "고비",
+      "desc": "흔들림 공격이 강해지는 고비."
+    },
+    {
+      "stage": 7,
+      "type": "battle",
+      "title": "가장 아픈 기억",
+      "desc": "가장 아픈 기억과 마주한다."
+    },
+    {
+      "stage": 8,
+      "type": "story",
+      "title": "선생님의 대답",
+      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다."
+    },
+    {
+      "stage": 9,
+      "type": "battle",
+      "title": "부르는 목소리",
+      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다."
+    },
+    {
+      "stage": 10,
+      "type": "boss",
+      "title": "그 아이의 상처",
+      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다."
+    }
+  ],
+  "3": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "악몽 진입",
+      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다."
+    },
+    {
+      "stage": 2,
+      "type": "battle",
+      "title": "첫 전투",
+      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투."
+    },
+    {
+      "stage": 3,
+      "type": "explore",
+      "title": "기억 조각",
+      "desc": "선택지로 길을 고르고 기억 조각을 찾는다."
+    },
+    {
+      "stage": 4,
+      "type": "battle",
+      "title": "과거의 기억",
+      "desc": "그 아이의 과거 기억이 적으로 나타난다."
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "처음 꺼낸 이야기",
+      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다."
+    },
+    {
+      "stage": 6,
+      "type": "battle",
+      "title": "고비",
+      "desc": "흔들림 공격이 강해지는 고비."
+    },
+    {
+      "stage": 7,
+      "type": "battle",
+      "title": "가장 아픈 기억",
+      "desc": "가장 아픈 기억과 마주한다."
+    },
+    {
+      "stage": 8,
+      "type": "story",
+      "title": "선생님의 대답",
+      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다."
+    },
+    {
+      "stage": 9,
+      "type": "battle",
+      "title": "부르는 목소리",
+      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다."
+    },
+    {
+      "stage": 10,
+      "type": "boss",
+      "title": "그 아이의 상처",
+      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다."
+    }
+  ],
+  "4": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "악몽 진입",
+      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다."
+    },
+    {
+      "stage": 2,
+      "type": "battle",
+      "title": "첫 전투",
+      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투."
+    },
+    {
+      "stage": 3,
+      "type": "explore",
+      "title": "기억 조각",
+      "desc": "선택지로 길을 고르고 기억 조각을 찾는다."
+    },
+    {
+      "stage": 4,
+      "type": "battle",
+      "title": "과거의 기억",
+      "desc": "그 아이의 과거 기억이 적으로 나타난다."
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "처음 꺼낸 이야기",
+      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다."
+    },
+    {
+      "stage": 6,
+      "type": "battle",
+      "title": "고비",
+      "desc": "흔들림 공격이 강해지는 고비."
+    },
+    {
+      "stage": 7,
+      "type": "battle",
+      "title": "가장 아픈 기억",
+      "desc": "가장 아픈 기억과 마주한다."
+    },
+    {
+      "stage": 8,
+      "type": "story",
+      "title": "선생님의 대답",
+      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다."
+    },
+    {
+      "stage": 9,
+      "type": "battle",
+      "title": "부르는 목소리",
+      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다."
+    },
+    {
+      "stage": 10,
+      "type": "boss",
+      "title": "그 아이의 상처",
+      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다."
+    }
+  ],
+  "5": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "악몽 진입",
+      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다."
+    },
+    {
+      "stage": 2,
+      "type": "battle",
+      "title": "첫 전투",
+      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투."
+    },
+    {
+      "stage": 3,
+      "type": "explore",
+      "title": "기억 조각",
+      "desc": "선택지로 길을 고르고 기억 조각을 찾는다."
+    },
+    {
+      "stage": 4,
+      "type": "battle",
+      "title": "과거의 기억",
+      "desc": "그 아이의 과거 기억이 적으로 나타난다."
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "처음 꺼낸 이야기",
+      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다."
+    },
+    {
+      "stage": 6,
+      "type": "battle",
+      "title": "고비",
+      "desc": "흔들림 공격이 강해지는 고비."
+    },
+    {
+      "stage": 7,
+      "type": "battle",
+      "title": "가장 아픈 기억",
+      "desc": "가장 아픈 기억과 마주한다."
+    },
+    {
+      "stage": 8,
+      "type": "story",
+      "title": "선생님의 대답",
+      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다."
+    },
+    {
+      "stage": 9,
+      "type": "battle",
+      "title": "부르는 목소리",
+      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다."
+    },
+    {
+      "stage": 10,
+      "type": "boss",
+      "title": "그 아이의 상처",
+      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다."
+    }
+  ],
+  "6": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "악몽 진입",
+      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다."
+    },
+    {
+      "stage": 2,
+      "type": "battle",
+      "title": "첫 전투",
+      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투."
+    },
+    {
+      "stage": 3,
+      "type": "explore",
+      "title": "기억 조각",
+      "desc": "선택지로 길을 고르고 기억 조각을 찾는다."
+    },
+    {
+      "stage": 4,
+      "type": "battle",
+      "title": "과거의 기억",
+      "desc": "그 아이의 과거 기억이 적으로 나타난다."
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "처음 꺼낸 이야기",
+      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다."
+    },
+    {
+      "stage": 6,
+      "type": "battle",
+      "title": "고비",
+      "desc": "흔들림 공격이 강해지는 고비."
+    },
+    {
+      "stage": 7,
+      "type": "battle",
+      "title": "가장 아픈 기억",
+      "desc": "가장 아픈 기억과 마주한다."
+    },
+    {
+      "stage": 8,
+      "type": "story",
+      "title": "선생님의 대답",
+      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다."
+    },
+    {
+      "stage": 9,
+      "type": "battle",
+      "title": "부르는 목소리",
+      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다."
+    },
+    {
+      "stage": 10,
+      "type": "boss",
+      "title": "그 아이의 상처",
+      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다."
+    }
+  ]
+}
