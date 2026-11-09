@@ -19,7 +19,9 @@
  * 협공      아군이 바로 앞 아군과 같은 적을 이어서 때리면 발동. 피해·약점 피해 ×(1.25 + 유대×0.05).
  * 흔들림    적의 속삭임, 동료가 쓰러지는 것으로 찬다. 가득 차면 1~2턴 얼어붙음(행동 불가, 받는 피해 1.3배).
  * 붙잡기    다른 부원이 차례를 써서 얼어붙음을 풀고 흔들림을 줄인다. 유대가 높을수록 많이.
- * 곁에 있기  선생님 명령. 차례를 쓰지 않고 전투당 3번. 의존도가 높을수록 많이.
+ * 곁에 있기  선생님 명령. 차례를 쓰지 않고 전투당 3번. 의존도 단계가 높을수록 많이.
+ * 의존도    단계가 높을수록 흔들림 최대치가 늘고, 흔들릴 때 나오는 대사가 바뀐다 (data/growth.json).
+ * 성장      레벨·스킬 레벨이 능력치와 스킬 효과에 반영된다. 이기면 결과 화면에서 경험치·의존도·유대가 오른다.
  * 교대      대기 부원이 있을 때만. 차례를 써서 전장의 부원 하나(쓰러진 부원 포함)를 대기 부원과 바꾼다.
  * 쓰러짐    체력 0이면 의식을 잃는다. 다른 부원의 흔들림이 오른다. 전장의 부원이 모두 쓰러지면 패배.
  */
@@ -43,12 +45,9 @@ const BATTLE_RULES = {
   COMBO_BASE: 1.25,
   COMBO_PER_BOND: 0.05,
   BOND_LEVEL_MAX: 10,
-  DEPENDENCY_LEVEL_MAX: 10,
   SHAKE_MAX: 100,
-  SHAKE_MAX_PER_DEPENDENCY: 5,
   SHAKE_ON_ALLY_DOWN: 20,
   SHAKE_AFTER_THAW: 0.5,
-  LEVEL_GROWTH: 0.06,
 };
 
 const Battle = { current: null };
@@ -76,13 +75,13 @@ Game.registerScreen('battle', {
       if (!c) throw new Error(`data/characters.json 에 "${id}" 부원이 없어요.`);
       const rec = save && save.characters[id];
       const level = rec ? rec.level : 1;
-      const dependency = Math.min(R.DEPENDENCY_LEVEL_MAX, rec ? rec.dependency : 0);
-      const grow = 1 + (level - 1) * R.LEVEL_GROWTH;
-      const maxHp = Math.round(c.stats.hp * grow);
+      const dep = Growth.dependencyStage(rec ? rec.dependency : 0);
+      const st = Growth.stats(c, level);
       return {
-        side: 'ally', uid: id, id, index, name: c.name, color: c.color, data: c,
-        maxHp, hp: maxHp, atk: Math.round(c.stats.atk * grow), spd: c.stats.spd,
-        shake: 0, shakeMax: R.SHAKE_MAX + dependency * R.SHAKE_MAX_PER_DEPENDENCY, dependency,
+        side: 'ally', uid: id, id, index, name: c.name, color: c.color, data: c, level,
+        maxHp: st.hp, hp: st.hp, atk: st.atk, spd: st.spd,
+        shake: 0, shakeMax: R.SHAKE_MAX + dep.shakeMaxBonus, dep, saidShakeLine: false,
+        skillLevels: rec ? { ...rec.skillLevels } : { skill: 1, heart: 1 },
         heart: 0, cooldowns: {}, frozen: 0, down: false,
         stealth: Boolean(c.traits && c.traits.stealthStart), charging: null,
         cover: false, coverReduce: 0, traits: c.traits || {},
@@ -132,6 +131,10 @@ Game.registerScreen('battle', {
       actor: null,
       stayUses: skill('stay').uses,
       lastAllyAttack: null, // { attacker, target } 협공 판정용
+      fielded: new Set(allies.map((a) => a.id)), // 전장에 한 번이라도 나선 부원
+      stays: {},            // 곁에 있기를 받은 횟수
+      comboPairs: new Set(),
+      grabPairs: new Set(),
       phase: 'start',       // start | command | target | busy | tutorial | ended
       result: null,
     };
@@ -368,6 +371,7 @@ Game.registerScreen('battle', {
         if (ev.log) log(ev.log, 'frozen');
         log(`${josa(u.name, '이', '가')} 얼어붙었다. (${u.frozen}턴)`, 'frozen');
         pop(u, '얼어붙음', 'shake');
+        sayShakeLine(u);
       }
     }
 
@@ -464,6 +468,18 @@ Game.registerScreen('battle', {
         u.charging = null;
         log(`${josa(u.name, '이', '가')} 얼어붙었다. (${u.frozen}턴)`, 'frozen');
       }
+      if (u.shake >= u.shakeMax * Game.data.growth.shakeLines.threshold) sayShakeLine(u);
+    }
+
+    /** 흔들림이 높을 때 한 번 하는 말. 의존도 단계에 따라 바뀐다. 흔들림이 절반 아래로 내려가면 다시 말할 수 있다 */
+    function sayShakeLine(u) {
+      if (u.saidShakeLine || u.down) return;
+      u.saidShakeLine = true;
+      const line = Growth.shakeLine(u.id, u.dep.stage);
+      log(`${u.name}: "${line}"`, u.dep.stage >= 4 ? 'calm' : 'frozen');
+      const bubble = el('div', `bt-say stage${u.dep.stage}`, line);
+      u.ui.card.appendChild(bubble);
+      setTimeout(() => bubble.remove(), 2600);
     }
 
     function reduceShake(u, amount, label) {
@@ -471,6 +487,7 @@ Game.registerScreen('battle', {
       const wasFrozen = Boolean(u.frozen);
       u.frozen = 0;
       u.shake = Math.max(0, u.shake - amount);
+      if (u.shake < u.shakeMax * 0.5) u.saidShakeLine = false;
       pop(u, `흔들림 −${amount}`, 'calm');
       if (wasFrozen && label) log(label);
     }
@@ -512,7 +529,25 @@ Game.registerScreen('battle', {
     }
     const pickOne = (sk) => ['enemy', 'ready_ally', 'shaken_ally', 'shaken_ally_any', 'swap_out'].includes(sk.target);
 
-    async function useSkill(actor, sk, target, { releasing = false } = {}) {
+    /** 스킬 레벨을 반영한 스킬 (피해·약점 피해·회복·흔들림 감소) */
+    function scaled(actor, base) {
+      if (base.slot !== 'skill' && base.slot !== 'heart') return base;
+      const m = Growth.skillMultiplier(actor.skillLevels[base.slot]);
+      if (m === 1) return base;
+      return {
+        ...base,
+        power: base.power != null ? base.power * m : base.power,
+        break: base.break != null ? base.break * m : base.break,
+        effects: (base.effects || []).map((fx) => ({
+          ...fx,
+          ...(fx.ratio != null ? { ratio: fx.ratio * m } : {}),
+          ...(fx.type === 'shake_down' ? { amount: Math.round(fx.amount * m) } : {}),
+        })),
+      };
+    }
+
+    async function useSkill(actor, baseSkill, target, { releasing = false } = {}) {
+      const sk = scaled(actor, baseSkill);
       const effects = sk.effects || [];
       const has = (type) => effects.find((e) => e.type === type);
 
@@ -542,6 +577,7 @@ Game.registerScreen('battle', {
         if (combo) {
           log(`협공! ${josa(combo.partner.name, '과', '와')} ${actor.name} (유대 ${combo.bond}) — ×${combo.mult.toFixed(2)}`, 'combo');
           pop(target, '협공!', 'combo');
+          state.comboPairs.add(Save.bondKey(actor.id, combo.partner.id));
           queueTrigger('combo');
         }
         hitEnemy(actor, target, sk, { combo: combo ? combo.mult : 1, breakMult });
@@ -604,14 +640,16 @@ Game.registerScreen('battle', {
       reduceShake(target, amount, `${target.name}의 얼어붙음이 풀렸다.`);
       addHeart(actor, g.heart || 0);
       state.lastAllyAttack = null;
+      state.grabPairs.add(Save.bondKey(actor.id, target.id));
       queueTrigger('grab');
     }
 
     function stay(target) {
       const st = skill('stay');
       state.stayUses -= 1;
-      const amount = st.shakeDown + target.dependency * st.dependencyBonus;
-      log(`선생님 — 곁에 있기. "${target.name}, 여기 있어." (남은 횟수 ${state.stayUses})`, 'calm');
+      const amount = st.shakeDown + target.dep.stayBonus;
+      state.stays[target.id] = (state.stays[target.id] || 0) + 1;
+      log(`선생님 — 곁에 있기. "${target.name}, 여기 있어." (의존도 ${target.dep.name} · 남은 횟수 ${state.stayUses})`, 'calm');
       reduceShake(target, amount, `${target.name}의 얼어붙음이 풀렸다.`);
     }
 
@@ -624,6 +662,7 @@ Game.registerScreen('battle', {
       out.coverReduce = 0;
       out.charging = null;
       incoming.av = R.AV_BASE / incoming.spd;
+      state.fielded.add(incoming.id);
       if (state.lastAllyAttack && state.lastAllyAttack.attacker === out) state.lastAllyAttack = null;
       log(`교대 — ${josa(out.name, '이', '가')} 물러나고 ${josa(incoming.name, '이', '가')} 나선다.`);
       layoutParty();
@@ -882,7 +921,19 @@ Game.registerScreen('battle', {
         row.appendChild(Game.button('타이틀로', () => Game.go('title')));
         row.appendChild(Game.button('다시 하기', () => Game.go('battle', params), { primary: true }));
       } else if (result === 'win') {
-        row.appendChild(Game.button('계속', () => (params.onWin ? params.onWin() : Game.go('result')), { primary: true }));
+        const next = params.onWin || (() => Game.go('room'));
+        row.appendChild(Game.button('계속', () => {
+          if (!Save.data) return next();
+          const report = Growth.applyBattleRewards({
+            fielded: [...state.fielded],
+            reserves: [...allies, ...bench].map((a) => a.id).filter((id) => !state.fielded.has(id)),
+            enemies: enemies.map((e) => e.data),
+            stays: state.stays,
+            comboPairs: [...state.comboPairs],
+            grabPairs: [...state.grabPairs],
+          });
+          Game.go('result', { report, onNext: next });
+        }, { primary: true }));
       } else if (params.onLose) {
         row.appendChild(Game.button('계속', () => params.onLose(), { primary: true }));
       } else {

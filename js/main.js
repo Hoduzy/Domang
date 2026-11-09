@@ -11,7 +11,7 @@ const Game = (() => {
   const STAGE_H = 1080;
 
   const screens = {};
-  const data = { characters: [], npcs: [], stages: {}, skills: [], enemies: [], tutorials: {}, roomTalk: {}, promises: {} };
+  const data = { characters: [], npcs: [], stages: {}, skills: [], enemies: [], tutorials: {}, roomTalk: {}, promises: {}, growth: {} };
   let stageEl = null;
   let currentId = null;
   let disposeCurrent = null;
@@ -112,7 +112,7 @@ const Game = (() => {
 
   // ===== 화면 전환 =====
   // 이어하기로 돌아올 화면으로 기록하지 않는 화면
-  const NO_RESUME_SCREENS = new Set(['notice', 'title', 'settings']);
+  const NO_RESUME_SCREENS = new Set(['notice', 'title', 'settings', 'result']);
 
   function registerScreen(id, def) {
     screens[id] = def;
@@ -241,7 +241,7 @@ const Game = (() => {
   }
 
   async function loadData() {
-    [data.characters, data.npcs, data.stages, data.skills, data.enemies, data.tutorials, data.roomTalk, data.promises] = await Promise.all([
+    [data.characters, data.npcs, data.stages, data.skills, data.enemies, data.tutorials, data.roomTalk, data.promises, data.growth] = await Promise.all([
       loadJSON('data/characters.json'),
       loadJSON('data/npcs.json'),
       loadJSON('data/stages.json'),
@@ -250,6 +250,7 @@ const Game = (() => {
       loadJSON('data/tutorials.json'),
       loadJSON('data/room_talk.json'),
       loadJSON('data/promises.json'),
+      loadJSON('data/growth.json'),
     ]);
   }
 
@@ -289,21 +290,6 @@ const Game = (() => {
 })();
 
 /* ===== 간단한 화면들 (본격적으로 만들 때 각자 파일로 분리) ===== */
-
-Game.registerScreen('result', {
-  title: '결과',
-  render(s) {
-    s.addButton('부실로', () => Game.go('room'), { primary: true });
-  },
-});
-
-Game.registerScreen('character', {
-  title: '캐릭터',
-  render(s) {
-    for (const c of Game.data.characters) s.body.appendChild(Assets.standing(c, 'smile', 'card'));
-    s.addButton('부실로', () => Game.go('room'), { primary: true });
-  },
-});
 
 Game.registerScreen('counsel', {
   title: '방과후 상담',

@@ -25,6 +25,7 @@
  *   bonds: { "hayun+seoyeon": 0, ... }  부원 두 명 사이의 유대. 아이디를 정해진 순서로 이은 키 (15쌍)
  *   memoryFragments: { hayun: ["fragment_id", ...], ... }  찾은 기억 조각
  *   flags: { prologue_first_answer: "unsure", ... }  대사 선택 결과 등 스토리 기록 (대사 파일의 remember)
+ *   materials: 0                       등불 조각 (스킬 강화 재료)
  *   formation: { "1": ["seoyeon", "yuna", "jiyu"] }  장마다 마지막으로 고른 편성
  *   promises: [                        얻은 약속
  *     { id, type: "smile"|"trust"|"tomorrow", grade: "bronze"|"silver"|"gold",
@@ -79,6 +80,7 @@ const Save = (() => {
       bonds,
       memoryFragments,
       flags: {},
+      materials: 0,
       formation: {},
       promises: [],
     };
@@ -170,6 +172,8 @@ const Save = (() => {
         if (['string', 'number', 'boolean'].includes(typeof v)) d.flags[k] = v;
       }
     }
+
+    d.materials = int(raw.materials, 0, 0);
 
     if (isObj(raw.formation)) {
       for (const [ch, list] of Object.entries(raw.formation)) {

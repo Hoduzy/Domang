@@ -1145,3 +1145,138 @@ input[type=range]:focus-visible { outline: 4px solid var(--accent); outline-offs
   animation: toast-in 0.2s ease-out;
 }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 16px); } }
+
+/* ===== 전투: 흔들림 대사 ===== */
+.bt-say {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  z-index: 4;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 320px;
+  padding: 10px 18px;
+  font-size: 22px;
+  line-height: 1.4;
+  text-align: center;
+  word-break: keep-all;
+  color: #e6ecff;
+  background: rgba(40, 52, 90, 0.95);
+  border: 2px solid #8fa8e8;
+  border-radius: 16px;
+  pointer-events: none;
+  animation: dlg-fade 0.25s ease-out;
+}
+.bt-say.stage4, .bt-say.stage5 { color: #10201b; background: rgba(191, 233, 217, 0.97); border-color: var(--accent); }
+
+/* ===== 결과 ===== */
+.rs-wrap {
+  position: absolute;
+  left: 64px; right: 64px; top: 170px; bottom: 200px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 28px;
+}
+.rs-side { display: flex; flex-direction: column; gap: 20px; min-height: 0; }
+.rs-panel { padding: 24px 32px; background: var(--panel); border: 2px solid var(--panel-line); border-radius: 24px; }
+.rs-title { margin: 0 0 14px; font-size: 34px; }
+.rs-row { display: flex; align-items: center; gap: 16px; min-height: 64px; flex-wrap: wrap; }
+.rs-row.compact { min-height: 48px; }
+.rs-name { width: 100px; padding-left: 12px; font-size: 30px; font-weight: 800; border-left: 8px solid var(--c, var(--accent)); }
+.rs-lv { width: 90px; font-size: 26px; color: var(--text-dim); }
+.rs-track { flex: 1; min-width: 180px; height: 18px; background: rgba(255, 255, 255, 0.12); border-radius: 9px; overflow: hidden; }
+.rs-track i { display: block; height: 100%; background: #f0c35a; border-radius: 9px; transition: width 0.9s ease-out; }
+.rs-gain { font-size: 24px; color: var(--accent); }
+.rs-dep { font-size: 24px; }
+.rs-pair { width: 200px; font-size: 26px; font-weight: 700; }
+.rs-badge { padding: 4px 14px; font-size: 22px; font-weight: 800; border-radius: 10px; animation: dlg-fade 0.5s ease-out; }
+.rs-badge.up { color: #2a1f05; background: #ffd36b; }
+.rs-badge.dep { color: #10201b; background: var(--accent); }
+.rs-empty { margin: 0; font-size: 24px; line-height: 1.5; color: var(--text-dim); word-break: keep-all; }
+.rs-material { display: flex; align-items: center; gap: 16px; font-size: 32px; }
+.rs-mat-icon { color: #ffd36b; }
+.rs-mat-total { margin-left: auto; font-size: 24px; color: var(--text-dim); }
+
+/* ===== 캐릭터 ===== */
+.cs-material {
+  position: absolute;
+  top: 56px; right: 64px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  font-size: 30px;
+  font-weight: 700;
+  background: var(--panel);
+  border: 2px solid var(--panel-line);
+  border-radius: 16px;
+}
+.cs-mat-icon { color: #ffd36b; }
+.cs-tabs {
+  position: absolute;
+  left: 64px; top: 170px; bottom: 200px;
+  z-index: 3;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.btn.cs-tab {
+  --c: #666;
+  min-width: 0;
+  min-height: 92px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-left: 12px solid var(--c);
+}
+.btn.cs-tab.selected { border-color: var(--accent); border-left-color: var(--c); background: rgba(30, 60, 52, 0.9); }
+.cs-tab-name { font-size: 32px; font-weight: 800; }
+.cs-tab-lv { font-size: 22px; color: var(--text-dim); }
+.cs-detail {
+  position: absolute;
+  left: 310px; right: 64px; top: 140px; bottom: 190px;
+  z-index: 3;
+  display: flex;
+  gap: 24px;
+}
+.cs-portrait { flex: 0 0 300px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cs-portrait .pic.cs-pic { width: 300px; height: 540px; }
+.cs-name { font-size: 40px; font-weight: 800; }
+.cs-role { font-size: 24px; color: var(--text-dim); }
+.cs-weak { font-size: 20px; color: #ff9aa5; text-align: center; word-break: keep-all; }
+.cs-grid { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 18px; }
+.cs-panel { min-height: 0; overflow: hidden; padding: 18px 24px; display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 2px solid var(--panel-line); border-radius: 20px; }
+.cs-panel-title { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 30px; }
+.cs-panel-extra { font-size: 22px; font-weight: 600; color: var(--accent); }
+.cs-sub { font-size: 21px; color: var(--text-dim); }
+.cs-bar { height: 16px; background: rgba(255, 255, 255, 0.12); border-radius: 8px; overflow: hidden; }
+.cs-bar i { display: block; height: 100%; border-radius: 8px; background: #f0c35a; }
+.cs-bar.dep i { background: #8fa8e8; }
+.cs-bar.bond i { background: var(--c, var(--accent)); }
+.cs-stats { display: flex; gap: 12px; margin-top: 6px; }
+.cs-stat { flex: 1; padding: 8px 12px; display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.06); border-radius: 12px; }
+.cs-stat-label { font-size: 18px; color: var(--text-dim); }
+.cs-stat-val { font-size: 30px; font-weight: 800; }
+.cs-note { margin: auto 0 0; font-size: 18px; line-height: 1.45; color: var(--text-dim); word-break: keep-all; }
+.cs-stages { display: flex; gap: 8px; }
+.cs-stage { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 50%; color: var(--text-dim); }
+.cs-stage.on { background: #8fa8e8; border-color: #8fa8e8; color: #10182a; }
+.cs-effects { margin: 4px 0 0; padding-left: 26px; font-size: 21px; line-height: 1.5; }
+.cs-say { margin-top: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 2px; background: rgba(40, 52, 90, 0.6); border-radius: 12px; }
+.cs-say-label { font-size: 18px; color: var(--text-dim); }
+.cs-say-line { font-size: 22px; font-style: italic; word-break: keep-all; }
+.cs-skill { display: flex; align-items: center; gap: 14px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.cs-skill-text { flex: 1; min-width: 0; }
+.cs-skill-name { font-size: 23px; font-weight: 800; }
+.cs-skill-lv { font-size: 19px; color: var(--accent); }
+.cs-skill-desc { font-size: 17px; line-height: 1.4; color: var(--text-dim); word-break: keep-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.btn.cs-upgrade { flex: 0 0 auto; min-width: 120px; min-height: 84px; padding: 0 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 24px; }
+.cs-upgrade-cost { font-size: 18px; color: #ffd36b; }
+.cs-bond { display: grid; grid-template-columns: 70px 1fr 30px; align-items: center; gap: 12px; font-size: 22px; }
+.cs-bond-name { padding-left: 10px; font-weight: 700; border-left: 6px solid var(--c); }
+.cs-bond-lv { text-align: right; font-weight: 800; }
+.cs-empty { font-size: 32px; }

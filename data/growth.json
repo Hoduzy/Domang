@@ -1,0 +1,86 @@
+{
+  "levelMax": 50,
+  "exp": {
+    "base": 60,
+    "perLevel": 30,
+    "_note": "다음 레벨까지 필요한 경험치 = base + perLevel × (현재 레벨 - 1)"
+  },
+  "statGrowth": {
+    "hp": 0.06,
+    "atk": 0.06,
+    "spd": 0.5,
+    "_note": "레벨 1당 체력·공격력 +6%, 속도 +0.5"
+  },
+  "material": {
+    "id": "lantern",
+    "name": "등불 조각",
+    "desc": "악몽에서 주워 오는 작은 불빛. 스킬을 강화할 때 쓴다."
+  },
+  "skillUpgrade": {
+    "maxLevel": 10,
+    "costPerLevel": 2,
+    "effectPerLevel": 0.08,
+    "_note": "강화 비용 = 현재 레벨 × costPerLevel. 효과(피해·약점 피해·회복·흔들림 감소) = 1 + effectPerLevel × (레벨 - 1)"
+  },
+  "dependency": {
+    "stages": [
+      {
+        "stage": 1,
+        "min": 0,
+        "name": "낯섦",
+        "shakeMaxBonus": 0,
+        "stayBonus": 0
+      },
+      {
+        "stage": 2,
+        "min": 10,
+        "name": "경계",
+        "shakeMaxBonus": 10,
+        "stayBonus": 10
+      },
+      {
+        "stage": 3,
+        "min": 25,
+        "name": "익숙함",
+        "shakeMaxBonus": 20,
+        "stayBonus": 20
+      },
+      {
+        "stage": 4,
+        "min": 45,
+        "name": "믿음",
+        "shakeMaxBonus": 35,
+        "stayBonus": 30
+      },
+      {
+        "stage": 5,
+        "min": 70,
+        "name": "버팀목",
+        "shakeMaxBonus": 50,
+        "stayBonus": 40
+      }
+    ],
+    "perBattle": 1,
+    "perStay": 3,
+    "_note": "의존도 점수. 전투에 나서면 perBattle, 곁에 있기를 받을 때마다 perStay만큼 오른다."
+  },
+  "bond": {
+    "max": 10,
+    "perCombo": 1,
+    "perGrab": 1,
+    "_note": "전투에서 둘이 협공하면 +1, 붙잡기를 하면 +1 (전투당 각 1번)"
+  },
+  "reserveExpRate": 0.5,
+  "shakeLines": {
+    "_note": "흔들림이 70% 이상이 되거나 얼어붙을 때 나오는 대사. 의존도 단계별. 캐릭터별로 덮어쓸 수 있다 (byCharacter).",
+    "threshold": 0.7,
+    "default": {
+      "1": "…아무도 안 와",
+      "2": "…아무도 안 와",
+      "3": "…선생님, 아직 거기 있어요?",
+      "4": "선생님이 기다린다고 했어",
+      "5": "선생님이 기다린다고 했어. 다들 있고… 나도 있으니까."
+    },
+    "byCharacter": {}
+  }
+}

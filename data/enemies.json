@@ -21,7 +21,9 @@
         "weight": 35,
         "line": "…아무도 안 와."
       }
-    ]
+    ],
+    "exp": 40,
+    "material": 1
   },
   {
     "id": "closed_door",
@@ -54,6 +56,8 @@
         "weight": 25,
         "line": "너 하나쯤… 없어도…"
       }
-    ]
+    ],
+    "exp": 220,
+    "material": 6
   }
 ]
