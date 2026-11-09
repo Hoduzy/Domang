@@ -34,7 +34,7 @@ Game.registerScreen('title', {
     const hasSave = Save.exists();
     s.addButton('설정', () => Game.go('settings', { from: 'title' }));
     s.addButton('전투 테스트', () => Game.go('battle', {
-      party: ['hayun', 'seojin', 'jiho'],
+      party: ['hayun', 'seoyeon', 'jiyu'],
       enemies: ['shade', 'shade', 'shade'],
       test: true,
     }));

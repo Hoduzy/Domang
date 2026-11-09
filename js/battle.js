@@ -2,7 +2,7 @@
  * battle.js — 턴제 전투
  *
  * 사용: Game.go('battle', {
- *   party: ['hayun', 'seojin', 'jiho'],   최대 3명
+ *   party: ['hayun', 'seoyeon', 'jiyu'],   최대 3명
  *   enemies: ['shade', 'shade', 'shade'],  data/enemies.json 아이디
  *   test: true,                            결과 창에 '다시 하기 / 타이틀로'
  *   onWin(), onLose()                      (선택) 끝났을 때
@@ -95,7 +95,7 @@ Game.registerScreen('battle', {
       };
     }
 
-    const partyIds = (params.party || ['hayun', 'seojin', 'jiho']).slice(0, 3);
+    const partyIds = (params.party || ['hayun', 'seoyeon', 'jiyu']).slice(0, 3);
     const enemyIds = params.enemies || ['shade', 'shade', 'shade'];
     let allies;
     let enemies;

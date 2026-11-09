@@ -7,11 +7,11 @@
 | 아이디 | 이름 |
 | --- | --- |
 | `hayun` | 하윤 |
-| `seojin` | 서진 |
-| `dohyeon` | 도현 |
+| `seoyeon` | 서연 |
+| `dahyeon` | 다현 |
 | `yuna` | 유나 |
-| `jiho` | 지호 |
-| `eunjae` | 은재 |
+| `jiyu` | 지유 |
+| `eunchae` | 은채 |
 
 ## 스탠딩 — `assets/characters/아이디_표정.png`
 
@@ -23,7 +23,7 @@
 | `surprised` | 놀람 |
 | `angry` | 화남 |
 
-예: `assets/characters/hayun_default.png`, `assets/characters/seojin_smile.png`
+예: `assets/characters/hayun_default.png`, `assets/characters/seoyeon_smile.png`
 
 표정 이미지가 아직 없고 `아이디_default.png`만 있으면 기본 표정을 대신 보여줘요.
 
@@ -33,7 +33,7 @@
 
 ## 악몽 속 모습 — `assets/characters/아이디_nightmare.png`
 
-예: `assets/characters/dohyeon_nightmare.png`
+예: `assets/characters/dahyeon_nightmare.png`
 
 ## 배경 — `assets/backgrounds/배경키.png`
 

@@ -299,7 +299,7 @@ Game.registerScreen('formation', {
     s.addButton('장 선택으로', () => Game.go('chapter'));
     const info = params.chapter != null ? Game.stageInfo(params.chapter, params.stage) : null;
     s.addButton('출발', () => Game.go('battle', {
-      party: ['hayun', 'seojin', 'jiho'], // TODO: 편성 화면에서 고른 3명
+      party: ['hayun', 'seoyeon', 'jiyu'], // TODO: 편성 화면에서 고른 3명
       enemies: (info && info.enemies) || ['shade', 'shade', 'shade'],
     }), { primary: true });
   },

@@ -22,7 +22,7 @@
  *       dependency: 0                         선생님에 대한 의존도
  *     }, ...
  *   },
- *   bonds: { "hayun+seojin": 0, ... }  부원 두 명 사이의 유대. 아이디를 정해진 순서로 이은 키 (15쌍)
+ *   bonds: { "hayun+seoyeon": 0, ... }  부원 두 명 사이의 유대. 아이디를 정해진 순서로 이은 키 (15쌍)
  *   memoryFragments: { hayun: ["fragment_id", ...], ... }  찾은 기억 조각
  *   flags: { prologue_first_answer: "unsure", ... }  대사 선택 결과 등 스토리 기록 (대사 파일의 remember)
  *   promises: [                        얻은 약속
@@ -88,11 +88,41 @@ const Save = (() => {
     (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback);
   const int = (v, fallback, min, max) => Math.round(num(v, fallback, min, max));
 
-  function normalize(raw) {
-    if (!isObj(raw)) throw new Error('저장 데이터 형식이 아니에요.');
-    if (typeof raw.version === 'number' && raw.version > VERSION) {
+  // 이름이 바뀌기 전 캐릭터 아이디 → 지금 아이디 (예전 저장 파일을 그대로 불러오기 위해)
+  const RENAMED_IDS = { seojin: 'seoyeon', dohyeon: 'dahyeon', jiho: 'jiyu', eunjae: 'eunchae' };
+  const renameId = (id) => RENAMED_IDS[id] || id;
+
+  function migrateIds(raw) {
+    const renameKeys = (obj) => {
+      if (!isObj(obj)) return obj;
+      const out = {};
+      for (const [k, v] of Object.entries(obj)) out[renameId(k)] = v;
+      return out;
+    };
+    const out = { ...raw };
+    out.characters = renameKeys(raw.characters);
+    out.memoryFragments = renameKeys(raw.memoryFragments);
+    if (isObj(raw.bonds)) {
+      out.bonds = {};
+      for (const [k, v] of Object.entries(raw.bonds)) {
+        const [a, b] = k.split('+').map(renameId);
+        out.bonds[a && b ? bondKey(a, b) : k] = v;
+      }
+    }
+    if (Array.isArray(raw.promises)) {
+      out.promises = raw.promises.map((pr) => (isObj(pr)
+        ? { ...pr, owner: renameId(pr.owner), equippedBy: pr.equippedBy && renameId(pr.equippedBy) }
+        : pr));
+    }
+    return out;
+  }
+
+  function normalize(input) {
+    if (!isObj(input)) throw new Error('저장 데이터 형식이 아니에요.');
+    if (typeof input.version === 'number' && input.version > VERSION) {
       throw new Error('더 새로운 버전의 게임에서 만든 저장 파일이에요.');
     }
+    const raw = migrateIds(input);
     const d = createDefault();
     d.createdAt = num(raw.createdAt, d.createdAt);
     d.updatedAt = num(raw.updatedAt, d.updatedAt);

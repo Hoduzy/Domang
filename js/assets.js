@@ -12,7 +12,7 @@
  * 표정 이미지가 없고 default 이미지만 있으면 default를 대신 보여준다.
  */
 const Assets = (() => {
-  const CHARACTER_IDS = ['hayun', 'seojin', 'dohyeon', 'yuna', 'jiho', 'eunjae'];
+  const CHARACTER_IDS = ['hayun', 'seoyeon', 'dahyeon', 'yuna', 'jiyu', 'eunchae'];
   const EXPRESSIONS = ['default', 'smile', 'sad', 'surprised', 'angry'];
   const EXPRESSION_LABELS = {
     default: '기본', smile: '웃음', sad: '슬픔', surprised: '놀람', angry: '화남',
