@@ -15,12 +15,21 @@
     {
       "stage": 3,
       "type": "battle",
-      "title": "사고"
+      "title": "사고",
+      "enemies": [
+        "shade",
+        "shade"
+      ]
     },
     {
       "stage": 4,
       "type": "battle",
-      "title": "처음 잡은 손"
+      "title": "처음 잡은 손",
+      "enemies": [
+        "shade",
+        "shade",
+        "shade"
+      ]
     },
     {
       "stage": 5,

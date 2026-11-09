@@ -11,7 +11,7 @@ const Game = (() => {
   const STAGE_H = 1080;
 
   const screens = {};
-  const data = { characters: [], npcs: [], stages: {} };
+  const data = { characters: [], npcs: [], stages: {}, skills: [], enemies: [] };
   let stageEl = null;
   let currentId = null;
   let disposeCurrent = null;
@@ -221,10 +221,12 @@ const Game = (() => {
   }
 
   async function loadData() {
-    [data.characters, data.npcs, data.stages] = await Promise.all([
+    [data.characters, data.npcs, data.stages, data.skills, data.enemies] = await Promise.all([
       loadJSON('data/characters.json'),
       loadJSON('data/npcs.json'),
       loadJSON('data/stages.json'),
+      loadJSON('data/skills.json'),
+      loadJSON('data/enemies.json'),
     ]);
   }
 
@@ -295,7 +297,11 @@ Game.registerScreen('formation', {
   render(s, params) {
     for (const c of Game.data.characters) s.body.appendChild(Assets.standing(c, 'default', 'card'));
     s.addButton('장 선택으로', () => Game.go('chapter'));
-    s.addButton('출발', () => Game.go('battle', params), { primary: true });
+    const info = params.chapter != null ? Game.stageInfo(params.chapter, params.stage) : null;
+    s.addButton('출발', () => Game.go('battle', {
+      party: ['hayun', 'seojin', 'jiho'], // TODO: 편성 화면에서 고른 3명
+      enemies: (info && info.enemies) || ['shade', 'shade', 'shade'],
+    }), { primary: true });
   },
 });
 

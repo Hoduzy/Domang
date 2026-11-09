@@ -1,3 +1,26 @@
 [
-  { "id": "shade", "name": "그늘" }
+  {
+    "id": "shade",
+    "name": "그늘",
+    "hp": 900,
+    "atk": 90,
+    "spd": 98,
+    "weak": 60,
+    "actions": [
+      {
+        "id": "scratch",
+        "name": "할퀴기",
+        "power": 1.0,
+        "weight": 65
+      },
+      {
+        "id": "whisper",
+        "name": "속삭임",
+        "power": 0.35,
+        "shake": 30,
+        "weight": 35,
+        "line": "…아무도 안 와."
+      }
+    ]
+  }
 ]

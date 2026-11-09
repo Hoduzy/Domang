@@ -33,6 +33,11 @@ Game.registerScreen('title', {
 
     const hasSave = Save.exists();
     s.addButton('설정', () => Game.go('settings', { from: 'title' }));
+    s.addButton('전투 테스트', () => Game.go('battle', {
+      party: ['hayun', 'seojin', 'jiho'],
+      enemies: ['shade', 'shade', 'shade'],
+      test: true,
+    }));
     s.addButton('새로 하기', async () => {
       if (Save.exists()) {
         const ok = await Game.confirm('저장된 진행이 지워지고 처음부터 시작해요. 계속할까요?', { ok: '새로 하기' });
