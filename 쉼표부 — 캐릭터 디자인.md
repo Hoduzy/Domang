@@ -43,7 +43,7 @@ Anime-style character design sheet of a Korean high school girl, full body front
 Anime-style battle character design of a Korean high school girl, full body dynamic pose, soft watercolor cel shading, dreamlike dark atmosphere, clean dark gray background, subculture gacha game illustration style. Character: small slender girl with long straight black hair and bangs half covering her eyes, her school uniform with gray cardigan transformed into a semi-transparent flowing cloak like a classroom curtain, the edges of her body blurred and fading as if partially erased, holding a thin elegant rapier made of white chalk, calm determined eyes, faded lavender-gray glow, modest full coverage outfit.
 ```
 
-## 서진 — 2장
+## 서연 — 2장
 
 3학년 전교 1등. 완벽해 보이지만 한 번의 실패에 무너진 아이. 테마 컬러는 남색과 흰색.
 
@@ -66,7 +66,7 @@ Anime-style character design sheet of a Korean high school girl, full body front
 Anime-style battle character design of a Korean high school girl, full body dynamic pose, soft watercolor cel shading, dreamlike dark atmosphere, clean dark gray background, subculture gacha game illustration style. Character: girl with chin-length dark navy bob and thin silver-rimmed glasses, her school uniform transformed into elegant armor made of layered exam papers covered in red grading marks, holding a giant red pen like a lance, answer sheets floating around her in a circle, sharp analytical eyes, navy white and red color theme, modest full coverage outfit.
 ```
 
-## 도현 — 3장
+## 다현 — 3장
 
 2학년. 부상으로 꿈을 잃은 전직 육상 유망주. 테마 컬러는 빛바랜 주황.
 
@@ -112,7 +112,7 @@ Anime-style character design sheet of a Korean high school girl, full body front
 Anime-style battle character design of a Korean high school girl, full body dynamic cheerful pose, soft watercolor cel shading, dreamlike dark carnival atmosphere, clean dark gray background, subculture gacha game illustration style. Character: girl with long wavy light brown hair in a two side-up style, wearing a colorful amusement park parade style outfit with ribbons and stars, a smiling white mask hanging from her waist, holding a pink cheering megaphone that glows with soft healing light, bright smile but slightly teary eyes, pink and lemon yellow color theme, modest full coverage outfit.
 ```
 
-## 지호 — 5장
+## 지유 — 5장
 
 1학년. 집에 가기 싫어 가장 늦게까지 학교에 남는 아이. 테마 컬러는 어두운 청록과 회색.
 
@@ -135,7 +135,7 @@ Anime-style character design sheet of a Korean high school girl, full body front
 Anime-style battle character design of a Korean high school girl, full body defensive pose, soft watercolor cel shading, dreamlike dark rainy atmosphere, clean dark gray background, subculture gacha game illustration style. Character: girl with messy chin-length dark hair and sharp eyes, wearing a long dark teal raincoat style armor over her school uniform, endless rain falling only around her, holding a huge open black umbrella that works as a giant shield in front of her allies, quiet protective expression, dark teal and gray color theme, modest full coverage outfit.
 ```
 
-## 은재 — 6장
+## 은채 — 6장
 
 2학년. 먼저 떠난 친구를 막지 못했다는 죄책감을 안고 사는 아이. 테마 컬러는 차분한 초록과 노란색 포인트.
 
