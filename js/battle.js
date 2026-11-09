@@ -23,6 +23,9 @@
  * 의존도    단계가 높을수록 흔들림 최대치가 늘고, 흔들릴 때 나오는 대사가 바뀐다 (data/growth.json).
  * 성장      레벨·스킬 레벨이 능력치와 스킬 효과에 반영된다. 이기면 결과 화면에서 경험치·의존도·유대가 오른다.
  * 교대      대기 부원이 있을 때만. 차례를 써서 전장의 부원 하나(쓰러진 부원 포함)를 대기 부원과 바꾼다.
+ * 약속      상담한 그 아이만 끼는 전용 장비 (data/promises.json 의 stats).
+ *           웃음: 공격력 +% (금: 약점을 터뜨리면 마음 게이지 추가) / 믿음: 흔들림 −% (금: 얼어붙기 직전 한 번 버팀)
+ *           내일: 속도 + (금: 전투 시작 시 마음 게이지 30%)
  * 쓰러짐    체력 0이면 의식을 잃는다. 다른 부원의 흔들림이 오른다. 전장의 부원이 모두 쓰러지면 패배.
  */
 
@@ -77,12 +80,18 @@ Game.registerScreen('battle', {
       const level = rec ? rec.level : 1;
       const dep = Growth.dependencyStage(rec ? rec.dependency : 0);
       const st = Growth.stats(c, level);
+      // 착용한 약속 (그 아이 전용)
+      const promise = save ? save.promises.find((pr) => pr.equippedBy === id && pr.owner === id) || null : null;
+      const pfx = promise ? (Game.data.promises.stats[promise.type] || {})[promise.grade] || {} : {};
       return {
         side: 'ally', uid: id, id, index, name: c.name, color: c.color, data: c, level,
-        maxHp: st.hp, hp: st.hp, atk: st.atk, spd: st.spd,
+        maxHp: st.hp, hp: st.hp,
+        atk: Math.round(st.atk * (1 + (pfx.atkPct || 0) / 100)),
+        spd: st.spd + (pfx.spd || 0),
+        promise, pfx, endureLeft: pfx.endure || 0,
         shake: 0, shakeMax: R.SHAKE_MAX + dep.shakeMaxBonus, dep, saidShakeLine: false,
         skillLevels: rec ? { ...rec.skillLevels } : { skill: 1, heart: 1 },
-        heart: 0, cooldowns: {}, frozen: 0, down: false,
+        heart: Math.min(R.HEART_MAX, pfx.startHeart || 0), cooldowns: {}, frozen: 0, down: false,
         stealth: Boolean(c.traits && c.traits.stealthStart), charging: null,
         cover: false, coverReduce: 0, traits: c.traits || {},
         skillIds: { basic: 'basic_attack', skill: c.skills.skill, heart: c.skills.heart },
@@ -246,6 +255,7 @@ Game.registerScreen('battle', {
         if (u.stealth) t.push(['숨음', 'stealth']);
         if (u.charging) t.push(['준비 중', 'charge']);
         if (u.cover) t.push(['우산', 'cover']);
+        if (u.promise) t.push([`${Game.data.promises.types[u.promise.type].name.replace('의 약속', '')}·${Game.data.promises.grades[u.promise.grade]}${u.endureLeft ? ' ✦' : ''}`, `promise ${u.promise.grade}`]);
         const cd = u.cooldowns[u.skillIds.skill];
         if (cd) t.push([`스킬 ${cd}턴`, 'cd']);
       } else {
@@ -419,6 +429,10 @@ Game.registerScreen('battle', {
         if (target.weak === 0) {
           target.broken = true;
           addHeart(actor, R.HEART_ON_BREAK);
+          if (actor.pfx && actor.pfx.breakHeart) {
+            addHeart(actor, actor.pfx.breakHeart);
+            log(`웃음의 약속 — ${actor.name}의 마음 게이지가 +${actor.pfx.breakHeart} 더 찼다.`, 'break');
+          }
           pop(target, '약점 터짐!', 'break');
           log(`${target.name}의 약점이 터졌다! ${actor.name}의 마음 게이지가 크게 찼다.`, 'break');
           queueTrigger('break');
@@ -458,11 +472,18 @@ Game.registerScreen('battle', {
 
     function addShake(u, amount) {
       if (u.down || u.frozen) return;
-      let mult = u.traits.shakeMult || 1;
+      let mult = (u.traits.shakeMult || 1) * (1 - (u.pfx && u.pfx.shakeReducePct || 0) / 100);
       if (u.traits.lonelyShakeMult && livingAllies().length === 1) mult *= u.traits.lonelyShakeMult;
       const gain = Math.round(amount * mult);
       u.shake = Math.min(u.shakeMax, u.shake + gain);
       pop(u, `흔들림 +${gain}`, 'shake');
+      // 믿음의 약속 (금): 얼어붙기 직전 한 번 스스로 버틴다
+      if (u.shake >= u.shakeMax && u.endureLeft > 0) {
+        u.endureLeft -= 1;
+        u.shake = u.shakeMax - 1;
+        pop(u, '버팀!', 'calm');
+        log(`믿음의 약속 — ${josa(u.name, '이', '가')} 스스로 버텼다. "${u.promise.line || '…아직 괜찮아.'}"`, 'calm');
+      }
       if (u.shake >= u.shakeMax) {
         u.frozen = Math.random() < 0.5 ? 1 : 2;
         u.charging = null;
@@ -887,6 +908,9 @@ Game.registerScreen('battle', {
       log(enemies.some((e) => e.data.boss) ? `${josa(enemies.find((e) => e.data.boss).name, '이', '가')} 길을 막아선다.` : '악몽 속 그늘이 모여든다.');
       updateUI();
       await sleep(400);
+      for (const a of allies) {
+        if (a.pfx && a.pfx.startHeart) log(`내일의 약속 — ${a.name}의 마음 게이지가 ${a.pfx.startHeart}%에서 시작한다.`, 'calm');
+      }
       await runTutorials('start');
       while (alive) {
         const result = checkEnd();

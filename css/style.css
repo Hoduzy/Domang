@@ -1440,3 +1440,14 @@ input[type=range]:focus-visible { outline: 4px solid var(--accent); outline-offs
 .cn-promise-hint { font-size: 22px; color: var(--text-dim); }
 .cn-empty { font-size: 32px; }
 .screen.counsel .screen-bg .pic-placeholder > * { display: none; }
+
+/* ===== 약속 착용 ===== */
+.fm-slot-line { font-size: 17px; font-style: italic; color: #cfc9bd; line-height: 1.35; word-break: keep-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fm-picker-sub { margin: -8px 0 16px; font-size: 24px; color: var(--text-dim); word-break: keep-all; }
+.fm-picker-line { font-size: 24px; font-weight: 400; font-style: italic; color: #e9e3d6; word-break: keep-all; }
+.btn.fm-picker-item.gold { border-color: #f0c35a; }
+.btn.fm-picker-item.silver { border-color: #c9cfd8; }
+.btn.fm-picker-item.bronze { border-color: #b98258; }
+.bt-tag.promise { background: #6b4a33; }
+.bt-tag.promise.silver { background: #59606b; }
+.bt-tag.promise.gold { background: #8a6d2c; }

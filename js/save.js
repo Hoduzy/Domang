@@ -226,6 +226,12 @@ const Save = (() => {
           obtainedAt: num(pr.obtainedAt, d.createdAt),
         }));
     }
+    // 약속은 상담한 그 아이만 낄 수 있고, 한 명당 하나만
+    const wearing = new Set();
+    for (const pr of d.promises) {
+      if (pr.equippedBy && (pr.equippedBy !== pr.owner || wearing.has(pr.equippedBy))) pr.equippedBy = null;
+      if (pr.equippedBy) wearing.add(pr.equippedBy);
+    }
     return d;
   }
 

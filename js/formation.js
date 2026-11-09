@@ -82,10 +82,11 @@ Game.registerScreen('formation', {
       const pr = equippedOf(c.id);
       slot.replaceChildren(el('span', 'fm-slot-label', '약속'));
       slot.classList.toggle('empty', !pr);
+      slot.classList.remove('gold', 'silver', 'bronze');
       if (pr) {
-        slot.classList.remove('gold', 'silver', 'bronze');
         slot.classList.add(pr.grade);
         slot.appendChild(el('span', 'fm-slot-name', promiseLabel(pr)));
+        if (pr.line) slot.appendChild(el('span', 'fm-slot-line', `"${pr.line}"`));
       } else {
         slot.appendChild(el('span', 'fm-slot-name', '비어 있음'));
       }
@@ -114,10 +115,14 @@ Game.registerScreen('formation', {
 
     // ----- 약속 고르기 -----
     function openPromisePicker(c) {
-      const mine = Save.data.promises.filter((pr) => pr.owner === c.id);
+      // 그 아이 전용. 좋은 등급이 위로
+      const order = { gold: 0, silver: 1, bronze: 2 };
+      const mine = Save.data.promises.filter((pr) => pr.owner === c.id)
+        .sort((a, b) => order[a.grade] - order[b.grade] || b.obtainedAt - a.obtainedAt);
       const overlay = el('div', 'modal-overlay');
       const box = el('div', 'modal fm-picker');
       box.appendChild(el('h2', 'fm-picker-title', `${c.name}의 약속`));
+      if (mine.length) box.appendChild(el('p', 'fm-picker-sub', `${c.name}에게 받은 약속 중 하나를 낄 수 있어요. 착용 중인 약속을 다시 누르면 빼요.`));
       const list = el('div', 'fm-picker-list scrollable');
       const close = () => overlay.remove();
       if (!mine.length) {
@@ -137,6 +142,7 @@ Game.registerScreen('formation', {
         item.classList.add('fm-picker-item', pr.grade);
         item.appendChild(el('span', 'fm-picker-name', promiseLabel(pr) + (on ? ' (착용 중)' : '')));
         item.appendChild(el('span', 'fm-picker-effect', promiseEffect(pr)));
+        if (pr.line) item.appendChild(el('span', 'fm-picker-line', `${c.name}: "${pr.line}"`));
         list.appendChild(item);
       }
       box.appendChild(list);
