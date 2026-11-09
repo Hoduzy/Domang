@@ -10,6 +10,10 @@ Game.registerScreen('room', {
     for (const c of Game.data.characters) members.appendChild(Assets.standing(c, 'default', 'card'));
     s.root.appendChild(members);
 
+    const settingsBtn = Game.button('설정', () => Game.go('settings', { from: 'room' }));
+    settingsBtn.classList.add('corner-btn');
+    s.root.appendChild(settingsBtn);
+
     s.addButton('타이틀로', () => Game.go('title'));
     s.addButton('출석부', () => Game.go('attendance'));
     s.addButton('방과후 상담', () => Game.go('counsel'));

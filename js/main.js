@@ -1,5 +1,5 @@
 /*
- * main.js — 화면 비율 맞추기, 화면 전환, 저장
+ * main.js — 화면 비율 맞추기, 화면 전환 (저장은 save.js)
  *
  * 화면은 Game.registerScreen(id, { title, render }) 로 등록한다.
  * render(screen, params) 는 Game.buildScreen()으로 만든 틀에 내용을 채운다.
@@ -28,35 +28,14 @@ const Game = (() => {
     // iOS 사파리의 두 손가락 확대, 화면 끌림, 길게 눌러 메뉴 막기
     document.addEventListener('gesturestart', (e) => e.preventDefault());
     document.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 1 || !e.target.closest('.scrollable')) e.preventDefault();
+      if (e.touches.length > 1 || !e.target.closest('.scrollable, input[type=range]')) e.preventDefault();
     }, { passive: false });
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('dblclick', (e) => e.preventDefault());
   }
 
-  // ===== 저장 (브라우저 저장소) =====
-  const Save = {
-    KEY: 'shimpyobu.save.v1',
-    load() {
-      try {
-        const raw = localStorage.getItem(this.KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch (e) {
-        return null;
-      }
-    },
-    save(patch) {
-      const next = { version: 1, ...(this.load() || {}), ...patch, updatedAt: Date.now() };
-      try {
-        localStorage.setItem(this.KEY, JSON.stringify(next));
-      } catch (e) { /* 개인정보 보호 모드 등에서는 저장 생략 */ }
-      return next;
-    },
-    clear() {
-      try { localStorage.removeItem(this.KEY); } catch (e) { /* 무시 */ }
-    },
-    exists() { return this.load() !== null; },
-  };
+  // 주제 안내 문구 — 안내 화면과 설정 화면에 똑같이 쓴다
+  const SUPPORT_MESSAGE = '이 게임은 자살과 우울을 다룹니다. 힘들 때는 혼자 견디지 말고 자살예방상담전화 109로 연락하세요.';
 
   // ===== DOM 도우미 =====
   function el(tag, className, text) {
@@ -84,7 +63,9 @@ const Game = (() => {
     if (background) bg.appendChild(Assets.background(background));
     root.appendChild(bg);
 
-    root.appendChild(el('h1', 'screen-title', def.title));
+    const heading = el('h1', 'screen-title', def.title);
+    if (def.hideTitle) heading.classList.add('visually-hidden');
+    root.appendChild(heading);
     const body = el('div', 'screen-body');
     const nav = el('div', 'screen-nav');
     root.appendChild(body);
@@ -100,7 +81,37 @@ const Game = (() => {
     };
   }
 
+  // ===== 확인 창 =====
+  /** 무대 안에 뜨는 확인 창. 확인을 누르면 true */
+  function confirmDialog(message, { ok = '확인', cancel = '취소' } = {}) {
+    return new Promise((resolve) => {
+      const overlay = el('div', 'modal-overlay');
+      const box = el('div', 'modal');
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-modal', 'true');
+      box.appendChild(el('p', 'modal-message', message));
+      const row = el('div', 'modal-buttons');
+      const close = (result) => { overlay.remove(); resolve(result); };
+      if (cancel) row.appendChild(button(cancel, () => close(false)));
+      row.appendChild(button(ok, () => close(true), { primary: true }));
+      box.appendChild(row);
+      overlay.appendChild(box);
+      stageEl.appendChild(overlay);
+      row.lastChild.focus();
+    });
+  }
+
+  /** 잠깐 떴다 사라지는 알림 */
+  function toast(message) {
+    const t = el('div', 'toast', message);
+    stageEl.appendChild(t);
+    setTimeout(() => t.remove(), 2400);
+  }
+
   // ===== 화면 전환 =====
+  // 이어하기로 돌아올 화면으로 기록하지 않는 화면
+  const NO_RESUME_SCREENS = new Set(['notice', 'title', 'settings']);
+
   function registerScreen(id, def) {
     screens[id] = def;
   }
@@ -115,7 +126,7 @@ const Game = (() => {
     def.render(screen, params);
     stageEl.replaceChildren(screen.root);
     currentId = id;
-    if (id !== 'title') Save.save({ lastScreen: id });
+    if (Save.data && !NO_RESUME_SCREENS.has(id)) Save.update((d) => { d.progress.lastScreen = id; });
   }
 
   function character(id) {
@@ -153,25 +164,17 @@ const Game = (() => {
       showBootError(err);
       return;
     }
-    go('title');
+    go('notice');
   }
 
   return {
-    STAGE_W, STAGE_H, data, Save,
-    boot, go, registerScreen, buildScreen, character, el, button,
+    STAGE_W, STAGE_H, SUPPORT_MESSAGE, data,
+    boot, go, registerScreen, buildScreen, character, el, button, confirm: confirmDialog, toast,
     get currentScreen() { return currentId; },
   };
 })();
 
 /* ===== 간단한 화면들 (본격적으로 만들 때 각자 파일로 분리) ===== */
-
-Game.registerScreen('title', {
-  title: '타이틀',
-  render(s) {
-    s.addButton('새로 하기', () => { Game.Save.clear(); Game.go('room'); }, { primary: true });
-    s.addButton('이어하기', () => Game.go('room'), { disabled: !Game.Save.exists() });
-  },
-});
 
 Game.registerScreen('chapter', {
   title: '장 선택',
