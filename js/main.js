@@ -11,7 +11,7 @@ const Game = (() => {
   const STAGE_H = 1080;
 
   const screens = {};
-  const data = { characters: [], npcs: [], stages: {}, skills: [], enemies: [] };
+  const data = { characters: [], npcs: [], stages: {}, skills: [], enemies: [], tutorials: {} };
   let stageEl = null;
   let currentId = null;
   let disposeCurrent = null;
@@ -158,6 +158,11 @@ const Game = (() => {
     return chapter === 0 ? '프롤로그' : `${chapter}장`;
   }
 
+  /** 장 제목 (stages.json 의 chapterTitles) */
+  function chapterTitle(chapter) {
+    return (data.stages.chapterTitles || {})[String(chapter)] || '';
+  }
+
   /** 스테이지를 시작한다. replay: 이미 클리어한 스테이지를 다시 보는 경우 */
   function playStage(chapter, stage, { replay = false } = {}) {
     const info = stageInfo(chapter, stage);
@@ -186,6 +191,7 @@ const Game = (() => {
     }
     const list = data.stages[String(chapter)] || [];
     const next = list.find((st) => st.stage === stage + 1);
+    let unlocked = null;
     Save.update((d) => {
       const key = String(chapter);
       const cleared = new Set(d.progress.cleared[key] || []);
@@ -193,11 +199,17 @@ const Game = (() => {
       d.progress.cleared[key] = [...cleared].sort((a, b) => a - b);
       if (d.progress.chapter === chapter && d.progress.stage === stage) {
         if (next) d.progress.stage = next.stage;
-        else if (chapter < 6) { d.progress.chapter = chapter + 1; d.progress.stage = 1; }
+        else if (chapter < 6) {
+          d.progress.chapter = chapter + 1;
+          d.progress.stage = 1;
+          unlocked = chapter + 1;
+        }
       }
     });
     if (next && next.type === 'story' && next.file) {
       playStage(chapter, next.stage);
+    } else if (unlocked != null) {
+      go('room', { unlocked });
     } else {
       go('room');
       toast(`${chapterLabel(chapter)} ${stage}. ${stageInfo(chapter, stage).title} 클리어`);
@@ -221,12 +233,13 @@ const Game = (() => {
   }
 
   async function loadData() {
-    [data.characters, data.npcs, data.stages, data.skills, data.enemies] = await Promise.all([
+    [data.characters, data.npcs, data.stages, data.skills, data.enemies, data.tutorials] = await Promise.all([
       loadJSON('data/characters.json'),
       loadJSON('data/npcs.json'),
       loadJSON('data/stages.json'),
       loadJSON('data/skills.json'),
       loadJSON('data/enemies.json'),
+      loadJSON('data/tutorials.json'),
     ]);
   }
 
@@ -260,7 +273,7 @@ const Game = (() => {
   return {
     STAGE_W, STAGE_H, SUPPORT_MESSAGE, data,
     boot, go, registerScreen, buildScreen, character, cast, castByName, el, button, confirm: confirmDialog, toast,
-    stageInfo, chapterLabel, playStage, completeStage, resume,
+    stageInfo, chapterLabel, chapterTitle, playStage, completeStage, resume,
     get currentScreen() { return currentId; },
   };
 })();
@@ -282,10 +295,13 @@ Game.registerScreen('chapter', {
         Game.playStage(chapter, info.stage, { replay: isDone });
       }, { primary: isCurrent, disabled: !isDone && !isCurrent });
       b.classList.add('stage-btn');
-      b.appendChild(Game.el('span', 'stage-status', `${info.type === 'battle' ? '전투' : '대화'} · ${status}`));
+      const kind = info.type === 'battle' ? '전투' : info.battle ? '대화 · 전투' : '대화';
+      b.appendChild(Game.el('span', 'stage-status', `${kind} · ${status}`));
       list.appendChild(b);
     }
-    s.body.appendChild(Game.el('div', 'stage-chapter', Game.chapterLabel(chapter)));
+    const title = Game.chapterTitle(chapter);
+    s.body.appendChild(Game.el('div', 'stage-chapter', chapter === 0 ? title : `${Game.chapterLabel(chapter)} 「${title}」`));
+    if (!list.children.length) list.appendChild(Game.el('p', 'stage-empty', '아직 준비 중이에요.'));
     s.body.appendChild(list);
     s.body.classList.add('chapter-body');
     s.addButton('부실로', () => Game.go('room'));

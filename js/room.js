@@ -5,7 +5,7 @@
 Game.registerScreen('room', {
   title: '부실',
   background: 'club_room',
-  render(s) {
+  render(s, params) {
     const members = Game.el('div', 'room-members');
     for (const c of Game.data.characters) members.appendChild(Assets.standing(c, 'default', 'card'));
     s.root.appendChild(members);
@@ -19,5 +19,20 @@ Game.registerScreen('room', {
     s.addButton('방과후 상담', () => Game.go('counsel'));
     s.addButton('캐릭터', () => Game.go('character'));
     s.addButton('화이트보드 (장 선택)', () => Game.go('chapter'), { primary: true });
+
+    // 새 장이 열렸을 때 한 번 보여주는 표시
+    if (params && params.unlocked != null) {
+      const ch = params.unlocked;
+      const overlay = Game.el('div', 'unlock-overlay');
+      const box = Game.el('div', 'unlock-box');
+      box.appendChild(Game.el('div', 'unlock-tag', '해금'));
+      box.appendChild(Game.el('h2', null, `${Game.chapterLabel(ch)} 해금`));
+      const title = Game.chapterTitle(ch);
+      if (title) box.appendChild(Game.el('p', 'unlock-title', `「${title}」`));
+      box.appendChild(Game.el('p', 'unlock-hint', '화이트보드에서 새 악몽을 확인할 수 있어요.'));
+      box.appendChild(Game.button('확인', () => overlay.remove(), { primary: true }));
+      overlay.appendChild(box);
+      s.root.appendChild(overlay);
+    }
   },
 });

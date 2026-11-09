@@ -23,7 +23,9 @@
 | `speaker` | 이름표에 표시할 이름 |
 | `aside` | 이름 옆 괄호 표시. `"독백"` → `선생님 (독백)` |
 | `narration` | 지문. 이름표 없이 전체가 기울임체로 보여요 |
-| `title` | 화면 가운데 큰 글씨 카드 (문패, 쪽지, 스테이지 클리어 등) |
+| `title` | 화면 가운데 큰 글씨 카드 (문패, 쪽지, 스테이지 클리어 등). 줄바꿈은 `\n` |
+| `tutorial` | 튜토리얼 상자. `{ "title": "전투 시작", "text": "…" }` |
+| `offstage` | `true`면 말하는 캐릭터를 무대에 올리지 않음 (문밖에서 하는 말 등) |
 
 ## 화면 바꾸기
 
@@ -50,6 +52,41 @@
 | `remember` | 저장 데이터(`flags`)에 영구히 남기는 값. 나중 장에서 `if`로 확인할 수 있어요 |
 
 파일을 불러올 때 없는 라벨로 가는 `goto`, 겹치는 라벨, 잘못된 `show`가 있으면 화면에 몇 번째 줄이 문제인지 표시돼요.
+
+## 전투
+
+```json
+{ "battle": {
+  "enemies": ["shade", "shade", "shade"],
+  "party": ["seoyeon", "yuna", "eunchae"],
+  "reserve": ["hayun", "jiyu", "dahyeon"],
+  "tutorial": "prologue_3"
+} }
+```
+
+- 이 줄에 오면 전투 화면으로 넘어가고, 이기면 바로 다음 줄부터 대화가 이어져요. 배경, 무대 위 인물, 대사 기록도 그대로예요.
+- `party`는 전장에 나서는 3명, `reserve`는 대기 부원이에요. 대기 부원이 있으면 전투에 '교대' 버튼이 생겨요.
+- `tutorial`은 `data/tutorials.json`의 튜토리얼 묶음 이름이에요.
+- 전장의 세 명이 모두 쓰러지면 `data/story/prologue_wakeup.json`(또는 `"wakeup": "파일이름"`)을 보여줘요. 이 파일의 마지막 선택지에서 `"set": { "retry": true }`를 고르면 같은 전투를 다시 시작하고, 아니면 부실로 가요.
+
+## 유대 올리기
+
+```json
+{ "title": "하윤과 지유의 유대가 1 올랐습니다.", "bond": { "pair": ["hayun", "jiyu"], "amount": 1, "once": "prologue_hayun_jiyu" } }
+```
+
+`once`가 있으면 같은 저장 데이터에서 한 번만 올라요. 스테이지를 다시 봐도 중복되지 않아요.
+
+## 전투 튜토리얼 (`data/tutorials.json`)
+
+| `when` | 뜨는 때 |
+| --- | --- |
+| `start` | 전투 시작 |
+| `allyTurn:아이디` | 그 부원의 첫 차례 |
+| `enemyTurn:N` | N번째 적 차례부터, `event`를 실행할 수 있는 첫 차례 |
+| `break` / `combo` / `grab` | 처음으로 약점이 터졌을 때 / 협공이 발동했을 때 / 붙잡기를 했을 때 |
+
+`event`로 연출을 넣을 수 있어요. 지금은 `{ "type": "freeze", "target": "jiyu", "turns": 2, "log": "…" }`(그 부원을 얼어붙게 함)만 있어요.
 
 ## 스테이지 연결
 

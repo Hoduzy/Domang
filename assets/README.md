@@ -41,6 +41,8 @@
 | --- | --- |
 | `staff_room` | 교무실 |
 | `club_room` | 부실 |
+| `club_room_rain` | 부실 — 비 오는 저녁 |
+| `club_room_dark` | 부실 — 정전 |
 | `hallway` | 복도 |
 | `classroom` | 교실 |
 | `classroom_night` | 교실 — 저녁 |
@@ -53,4 +55,4 @@
 
 ## 적 — `assets/enemies/적키.png`
 
-예: `assets/enemies/shade.png` (그늘)
+예: `assets/enemies/shade.png` (그늘), `assets/enemies/closed_door.png` (보스 닫힌 문)

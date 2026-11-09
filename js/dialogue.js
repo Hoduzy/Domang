@@ -38,6 +38,9 @@ const Story = (() => {
           if (opt.goto != null) checkGoto(opt.goto, i);
         });
       }
+      if (line.battle != null && (!Array.isArray(line.battle.enemies) || !line.battle.enemies.length)) {
+        throw new Error(`${where(i)}: battle에는 enemies 배열이 필요해요.`);
+      }
       if (line.show != null && (!Array.isArray(line.show) || line.show.length > 3)) {
         throw new Error(`${where(i)}: show는 최대 3명까지의 배열이어야 해요.`);
       }
@@ -178,6 +181,17 @@ Game.registerScreen('dialogue', {
     function applyValues(obj) {
       if (obj && obj.set) Object.assign(state.vars, obj.set);
       if (obj && obj.remember && Save.data) Save.update((d) => Object.assign(d.flags, obj.remember));
+      // 유대 올리기. once 키가 있으면 저장 데이터당 한 번만 (다시 보기로 중복되지 않게)
+      if (obj && obj.bond && Save.data) {
+        const { pair, amount = 1, once } = obj.bond;
+        if (!once || !Save.data.flags[`bond:${once}`]) {
+          Save.update((d) => {
+            const key = Save.bondKey(pair[0], pair[1]);
+            d.bonds[key] = (d.bonds[key] || 0) + amount;
+            if (once) d.flags[`bond:${once}`] = true;
+          });
+        }
+      }
     }
 
     // ----- 배경 -----
@@ -234,7 +248,10 @@ Game.registerScreen('dialogue', {
       state.dimAll = false;
       if (line.speaker || line.who) {
         const member = line.who ? Game.cast(line.who) : Game.castByName(line.speaker);
-        if (member) {
+        if (member && line.offstage) {
+          // 화면 밖에서 말함: 무대에 올리지 않는다
+          state.dimAll = true;
+        } else if (member) {
           let entry = state.cast.find((e) => e.id === member.id);
           if (!entry) {
             entry = { id: member.id, face: 'default' };
@@ -274,7 +291,9 @@ Game.registerScreen('dialogue', {
           continue;
         }
         if (line.title != null) return showTitle(line);
+        if (line.tutorial != null) return showTutorial(line);
         if (line.text != null || line.narration != null) return showLine(line);
+        if (line.battle != null) return launchBattle(line.battle);
 
         if (line.goto != null) jump(line.goto);
         else state.index++;
@@ -335,11 +354,56 @@ Game.registerScreen('dialogue', {
 
     function showTitle(line) {
       box.classList.add('hidden');
+      titleCard.classList.remove('tutorial');
       titleCard.textContent = String(line.title);
       titleCard.classList.add('show');
       state.log.push({ kind: 'title', speaker: '', segments: [{ text: String(line.title), em: false }] });
       state.mode = 'title';
       scheduleAdvance();
+    }
+
+    function showTutorial(line) {
+      box.classList.add('hidden');
+      const t = line.tutorial;
+      titleCard.replaceChildren();
+      titleCard.classList.add('tutorial');
+      const panel = el('div', 'dlg-tutorial');
+      panel.appendChild(el('div', 'dlg-tutorial-tag', '튜토리얼'));
+      if (t.title) panel.appendChild(el('h2', null, t.title));
+      panel.appendChild(el('p', null, t.text));
+      titleCard.appendChild(panel);
+      titleCard.classList.add('show');
+      state.log.push({ kind: 'title', speaker: '[튜토리얼]', segments: [{ text: `${t.title ? `${t.title} — ` : ''}${t.text}`, em: false }] });
+      state.mode = 'title';
+      scheduleAdvance();
+    }
+
+    /** 대사 도중 전투. 이기면 다음 줄부터 이어서, 지면 깨어나는 장면 후 다시 도전 */
+    function launchBattle(cfg) {
+      setAuto(false);
+      setSkip(false);
+      state.mode = 'ended';
+      const snapshot = {
+        index: state.index + 1,
+        vars: { ...state.vars },
+        cast: state.cast.map((c) => ({ ...c })),
+        bgKey: state.bgKey,
+        log: state.log.slice(-300),
+      };
+      const resumeParams = { ...params, resume: snapshot };
+      const battleParams = {
+        party: cfg.party,
+        reserve: cfg.reserve,
+        enemies: cfg.enemies,
+        tutorial: cfg.tutorial,
+        onWin: () => Game.go('dialogue', resumeParams),
+        onLose: () => Game.go('dialogue', {
+          file: cfg.wakeup || 'prologue_wakeup',
+          heading: params.heading,
+          onEnd: (vars) => (vars.retry ? Game.go('battle', battleParams) : Game.go('room')),
+        }),
+      };
+      Game.go('battle', battleParams);
     }
 
     function showChoices(options) {
@@ -369,7 +433,7 @@ Game.registerScreen('dialogue', {
       state.mode = 'ended';
       setAuto(false);
       setSkip(false);
-      if (typeof params.onEnd === 'function') params.onEnd();
+      if (typeof params.onEnd === 'function') params.onEnd(state.vars);
       else Game.go('room');
     }
 
@@ -481,6 +545,16 @@ Game.registerScreen('dialogue', {
       .then((script) => {
         state.script = script;
         state.index = 0;
+        const r = params.resume;
+        if (r) {
+          // 전투가 끝나고 돌아온 경우: 배경·인물·기록을 되살리고 다음 줄부터
+          state.index = r.index;
+          Object.assign(state.vars, r.vars);
+          state.cast = r.cast.map((c) => ({ ...c }));
+          state.log = r.log.slice();
+          if (r.bgKey) setBackground(r.bgKey);
+          renderCast();
+        }
         run();
       })
       .catch(showError);

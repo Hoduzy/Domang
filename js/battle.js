@@ -2,10 +2,12 @@
  * battle.js — 턴제 전투
  *
  * 사용: Game.go('battle', {
- *   party: ['hayun', 'seoyeon', 'jiyu'],   최대 3명
+ *   party: ['hayun', 'seoyeon', 'jiyu'],   전장에 나서는 부원 (최대 3명)
+ *   reserve: ['yuna', 'eunchae'],          (선택) 대기 부원. '교대'로 전장의 부원과 바꾼다
  *   enemies: ['shade', 'shade', 'shade'],  data/enemies.json 아이디
+ *   tutorial: 'prologue_3',                (선택) data/tutorials.json 의 튜토리얼 묶음
  *   test: true,                            결과 창에 '다시 하기 / 타이틀로'
- *   onWin(), onLose()                      (선택) 끝났을 때
+ *   onWin(), onLose()                      (선택) 끝났을 때. 있으면 결과 창에 '계속' 버튼
  * })
  *
  * 수치는 data/characters.json(능력치), data/skills.json(스킬), data/enemies.json(적)에 있다.
@@ -18,17 +20,18 @@
  * 흔들림    적의 속삭임, 동료가 쓰러지는 것으로 찬다. 가득 차면 1~2턴 얼어붙음(행동 불가, 받는 피해 1.3배).
  * 붙잡기    다른 부원이 차례를 써서 얼어붙음을 풀고 흔들림을 줄인다. 유대가 높을수록 많이.
  * 곁에 있기  선생님 명령. 차례를 쓰지 않고 전투당 3번. 의존도가 높을수록 많이.
- * 쓰러짐    체력 0이면 의식을 잃고 빠진다. 다른 부원의 흔들림이 오른다.
+ * 교대      대기 부원이 있을 때만. 차례를 써서 전장의 부원 하나(쓰러진 부원 포함)를 대기 부원과 바꾼다.
+ * 쓰러짐    체력 0이면 의식을 잃는다. 다른 부원의 흔들림이 오른다. 전장의 부원이 모두 쓰러지면 패배.
  */
 
-const BattleTiming = { scale: 1 };
+const BattleTiming = { scale: 1 }; // 테스트에서 연출 속도를 줄일 때 사용
 
 /** 받침에 맞춰 조사를 붙인다. josa('하윤', '이', '가') → '하윤이' */
 function josa(word, withBatchim, withoutBatchim) {
   const code = word.charCodeAt(word.length - 1);
   const hasBatchim = code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
   return word + (hasBatchim ? withBatchim : withoutBatchim);
-} // 테스트에서 연출 속도를 줄일 때 사용
+}
 
 const BATTLE_RULES = {
   AV_BASE: 10000,
@@ -47,6 +50,8 @@ const BATTLE_RULES = {
   SHAKE_AFTER_THAW: 0.5,
   LEVEL_GROWTH: 0.06,
 };
+
+const Battle = { current: null };
 
 Game.registerScreen('battle', {
   title: '전투',
@@ -68,6 +73,7 @@ Game.registerScreen('battle', {
 
     function makeAlly(id, index) {
       const c = Game.character(id);
+      if (!c) throw new Error(`data/characters.json 에 "${id}" 부원이 없어요.`);
       const rec = save && save.characters[id];
       const level = rec ? rec.level : 1;
       const dependency = Math.min(R.DEPENDENCY_LEVEL_MAX, rec ? rec.dependency : 0);
@@ -96,33 +102,44 @@ Game.registerScreen('battle', {
     }
 
     const partyIds = (params.party || ['hayun', 'seoyeon', 'jiyu']).slice(0, 3);
+    const reserveIds = (params.reserve || []).filter((id) => !partyIds.includes(id));
     const enemyIds = params.enemies || ['shade', 'shade', 'shade'];
-    let allies;
+    let allies;   // 전장의 부원 (자리 순서)
+    let bench;    // 대기 부원
     let enemies;
     try {
       allies = partyIds.map(makeAlly);
+      bench = reserveIds.map((id, i) => makeAlly(id, partyIds.length + i));
       enemies = enemyIds.map((id, i) => makeEnemy(id, i, enemyIds.length));
     } catch (err) {
       s.body.appendChild(el('p', 'bt-error', err.message));
       s.addButton('돌아가기', () => Game.go('title'));
       return undefined;
     }
-    const units = [...allies, ...enemies];
-    units.forEach((u) => { u.av = R.AV_BASE / u.spd; });
+    const hasBench = bench.length > 0;
+    if (hasBench) s.root.classList.add('has-bench');
+    [...allies, ...bench, ...enemies].forEach((u) => { u.av = R.AV_BASE / u.spd; });
+
+    const fieldUnits = () => [...allies, ...enemies];
+    const everyUnit = () => [...allies, ...bench, ...enemies];
 
     const state = {
-      allies, enemies, units,
+      get allies() { return allies; },
+      get bench() { return bench; },
+      enemies,
       turn: 0,
+      enemyTurns: 0,
       actor: null,
       stayUses: skill('stay').uses,
       lastAllyAttack: null, // { attacker, target } 협공 판정용
-      phase: 'start',       // start | command | target | busy | ended
+      phase: 'start',       // start | command | target | busy | tutorial | ended
       result: null,
     };
     Battle.current = state; // 디버그·테스트용
 
     const livingAllies = () => allies.filter((u) => !u.down);
     const livingEnemies = () => enemies.filter((u) => !u.down);
+    const livingBench = () => bench.filter((u) => !u.down);
     const rand = (a, b) => a + Math.random() * (b - a);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms * BattleTiming.scale));
 
@@ -130,9 +147,12 @@ Game.registerScreen('battle', {
     s.root.classList.add('battle');
     const timeline = el('div', 'bt-timeline');
     const field = el('div', 'bt-field');
+    const partySide = el('div', 'bt-party-side');
+    const benchEl = el('div', 'bt-bench');
     const partyEl = el('div', 'bt-party');
+    partySide.append(benchEl, partyEl);
     const enemyEl = el('div', 'bt-enemies');
-    field.append(partyEl, enemyEl);
+    field.append(partySide, enemyEl);
     const panel = el('div', 'bt-panel');
     const actorEl = el('div', 'bt-actor');
     const descEl = el('div', 'bt-desc');
@@ -163,7 +183,7 @@ Game.registerScreen('battle', {
       return { wrap, fill, value };
     }
 
-    for (const u of allies) {
+    for (const u of [...allies, ...bench]) {
       const card = el('div', 'bt-unit ally');
       card.dataset.uid = u.uid;
       card.appendChild(Assets.nightmare(u.data, 'bt-pic'));
@@ -173,10 +193,19 @@ Game.registerScreen('battle', {
       info.append(u.ui.hp.wrap, u.ui.shake.wrap, u.ui.heart.wrap, u.ui.tags);
       card.appendChild(info);
       card.addEventListener('click', () => onUnitTap(u));
-      partyEl.appendChild(card);
+
+      // 대기석용 작은 카드
+      const mini = el('div', 'bt-bench-card');
+      mini.dataset.uid = u.uid;
+      mini.style.setProperty('--chip', u.color);
+      mini.appendChild(el('span', 'bt-bench-name', u.name));
+      u.ui.miniHp = bar('hp', '체력');
+      mini.appendChild(u.ui.miniHp.wrap);
+      mini.addEventListener('click', () => onUnitTap(u));
+      u.ui.mini = mini;
     }
     for (const u of enemies) {
-      const card = el('div', 'bt-unit enemy');
+      const card = el('div', `bt-unit enemy${u.data.boss ? ' boss' : ''}`);
       card.dataset.uid = u.uid;
       const info = el('div', 'bt-info');
       info.appendChild(el('div', 'bt-name', u.name));
@@ -187,6 +216,19 @@ Game.registerScreen('battle', {
       card.addEventListener('click', () => onUnitTap(u));
       enemyEl.appendChild(card);
     }
+
+    function layoutParty() {
+      partyEl.replaceChildren(...allies.map((u) => u.ui.card));
+      benchEl.replaceChildren();
+      if (hasBench) {
+        benchEl.appendChild(el('span', 'bt-bench-label', '대기'));
+        bench.forEach((u) => benchEl.appendChild(u.ui.mini));
+      }
+    }
+    layoutParty();
+
+    /** 대상 고르기 표시를 붙일 요소 (대기 부원은 작은 카드) */
+    const cardOf = (u) => (bench.includes(u) ? u.ui.mini : u.ui.card);
 
     function setBar(b, value, max, text) {
       b.fill.style.width = `${Math.max(0, Math.min(1, value / max)) * 100}%`;
@@ -211,11 +253,13 @@ Game.registerScreen('battle', {
     }
 
     function updateUI() {
-      for (const u of units) {
+      for (const u of everyUnit()) {
         setBar(u.ui.hp, u.hp, u.maxHp);
         if (u.side === 'ally') {
           setBar(u.ui.shake, u.shake, u.shakeMax);
           setBar(u.ui.heart, u.heart, R.HEART_MAX, u.heart >= R.HEART_MAX ? 'MAX' : `${u.heart}`);
+          setBar(u.ui.miniHp, u.hp, u.maxHp);
+          u.ui.mini.classList.toggle('down', u.down);
         } else {
           setBar(u.ui.weak, u.weak, u.weakMax);
         }
@@ -229,8 +273,10 @@ Game.registerScreen('battle', {
     }
 
     // ===== 턴 순서 =====
+    const order = (u) => (u.side === 'ally' ? allies.indexOf(u) : 10 + u.index);
+
     function upcoming(count) {
-      const sim = units.filter((u) => !u.down).map((u) => ({ u, av: u.av }));
+      const sim = fieldUnits().filter((u) => !u.down).map((u) => ({ u, av: u.av }));
       const out = [];
       if (!sim.length) return out;
       for (let i = 0; i < count; i++) {
@@ -243,15 +289,14 @@ Game.registerScreen('battle', {
       }
       return out;
     }
-    const order = (u) => (u.side === 'ally' ? 0 : 10) + u.index;
 
     function renderTimeline() {
       const list = [];
-      if (state.actor && !state.actor.down) list.push(state.actor);
+      if (state.actor && !state.actor.down && fieldUnits().includes(state.actor)) list.push(state.actor);
       list.push(...upcoming(8 - list.length));
       timeline.replaceChildren(el('span', 'bt-timeline-label', '행동 순서'));
       list.forEach((u, i) => {
-        const chip = el('div', `bt-chip ${u.side}${i === 0 && state.actor ? ' now' : ''}`);
+        const chip = el('div', `bt-chip ${u.side}${i === 0 && state.actor === u ? ' now' : ''}`);
         if (u.side === 'ally') chip.style.setProperty('--chip', u.color);
         chip.appendChild(el('span', null, u.name));
         timeline.appendChild(chip);
@@ -259,7 +304,7 @@ Game.registerScreen('battle', {
     }
 
     function nextActor() {
-      const living = units.filter((u) => !u.down);
+      const living = fieldUnits().filter((u) => !u.down);
       living.sort((a, b) => a.av - b.av || order(a) - order(b));
       const actor = living[0];
       const dt = actor.av;
@@ -283,6 +328,79 @@ Game.registerScreen('battle', {
       setTimeout(() => p.remove(), 1100);
     }
 
+    // ===== 튜토리얼 =====
+    const tutorials = (params.tutorial && (Game.data.tutorials || {})[params.tutorial]) || [];
+    const shownTutorials = new Set();
+    const queuedTriggers = new Set();
+    let closeTutorial = null;
+
+    function showTutorialBox(t) {
+      return new Promise((resolve) => {
+        const overlay = el('div', 'bt-tutorial');
+        const box = el('div', 'bt-tutorial-box');
+        box.appendChild(el('div', 'bt-tutorial-tag', '튜토리얼'));
+        if (t.title) box.appendChild(el('h2', null, t.title));
+        box.appendChild(el('p', null, t.text));
+        const done = () => { overlay.remove(); closeTutorial = null; resolve(); };
+        closeTutorial = done;
+        box.appendChild(Game.button('확인', done, { primary: true }));
+        overlay.appendChild(box);
+        s.root.appendChild(overlay);
+      });
+    }
+
+    function eventPossible(ev) {
+      if (!ev) return true;
+      if (ev.type === 'freeze') {
+        const u = allies.find((a) => a.id === ev.target);
+        return Boolean(u && !u.down && !u.frozen);
+      }
+      return true;
+    }
+
+    function applyEvent(ev) {
+      if (!ev) return;
+      if (ev.type === 'freeze') {
+        const u = allies.find((a) => a.id === ev.target);
+        u.shake = u.shakeMax;
+        u.frozen = ev.turns || 2;
+        u.charging = null;
+        if (ev.log) log(ev.log, 'frozen');
+        log(`${josa(u.name, '이', '가')} 얼어붙었다. (${u.frozen}턴)`, 'frozen');
+        pop(u, '얼어붙음', 'shake');
+      }
+    }
+
+    function triggerMatches(when, trigger) {
+      if (when === trigger) return true;
+      // enemyTurn:N 은 N번째 적 차례부터 조건이 맞는 첫 차례에
+      const m = /^enemyTurn:(\d+)$/.exec(when);
+      return Boolean(m && trigger === 'enemyTurn' && state.enemyTurns >= Number(m[1]));
+    }
+
+    async function runTutorials(trigger) {
+      for (let i = 0; i < tutorials.length; i++) {
+        const t = tutorials[i];
+        if (shownTutorials.has(i) || !triggerMatches(t.when, trigger) || !eventPossible(t.event)) continue;
+        shownTutorials.add(i);
+        applyEvent(t.event);
+        updateUI();
+        const prev = state.phase;
+        state.phase = 'tutorial';
+        await showTutorialBox(t);
+        if (!alive) return;
+        state.phase = prev;
+      }
+    }
+
+    const queueTrigger = (name) => { if (tutorials.length) queuedTriggers.add(name); };
+    async function flushTriggers() {
+      for (const name of [...queuedTriggers]) {
+        queuedTriggers.delete(name);
+        await runTutorials(name);
+      }
+    }
+
     // ===== 피해와 상태 =====
     function hitEnemy(actor, target, sk, { combo = 1, breakMult = 1 } = {}) {
       if (target.down) return;
@@ -299,6 +417,7 @@ Game.registerScreen('battle', {
           addHeart(actor, R.HEART_ON_BREAK);
           pop(target, '약점 터짐!', 'break');
           log(`${target.name}의 약점이 터졌다! ${actor.name}의 마음 게이지가 크게 찼다.`, 'break');
+          queueTrigger('break');
         }
       }
       if (target.hp <= 0) {
@@ -311,10 +430,10 @@ Game.registerScreen('battle', {
       }
     }
 
-    function hitAlly(enemy, target, action) {
+    function hitAlly(enemy, target, action, { aoe = false } = {}) {
       let t = target;
       const coverer = allies.find((a) => a.cover && !a.down);
-      if (!action.shake && coverer && coverer !== t) {
+      if (!aoe && !action.shake && coverer && coverer !== t) {
         t = coverer;
         log(`${josa(coverer.name, '이', '가')} 우산으로 ${josa(target.name, '을', '를')} 감쌌다.`);
       }
@@ -370,7 +489,7 @@ Game.registerScreen('battle', {
     // ===== 스킬 =====
     function comboFor(actor, target) {
       const last = state.lastAllyAttack;
-      if (last && last.target === target && last.attacker !== actor && !last.attacker.down) {
+      if (last && last.target === target && last.attacker !== actor && !last.attacker.down && allies.includes(last.attacker)) {
         const bond = bondLevel(actor.id, last.attacker.id);
         return { mult: R.COMBO_BASE + bond * R.COMBO_PER_BOND, partner: last.attacker, bond };
       }
@@ -387,10 +506,11 @@ Game.registerScreen('battle', {
         case 'ready_ally': return livingAllies().filter((a) => a !== actor && !a.frozen);
         case 'shaken_ally': return livingAllies().filter((a) => a !== actor && (a.frozen || a.shake > 0));
         case 'shaken_ally_any': return livingAllies().filter((a) => a.frozen || a.shake > 0);
+        case 'swap_out': return livingBench().length ? [...allies] : [];
         default: return [];
       }
     }
-    const pickOne = (sk) => ['enemy', 'ready_ally', 'shaken_ally', 'shaken_ally_any'].includes(sk.target);
+    const pickOne = (sk) => ['enemy', 'ready_ally', 'shaken_ally', 'shaken_ally_any', 'swap_out'].includes(sk.target);
 
     async function useSkill(actor, sk, target, { releasing = false } = {}) {
       const effects = sk.effects || [];
@@ -422,6 +542,7 @@ Game.registerScreen('battle', {
         if (combo) {
           log(`협공! ${josa(combo.partner.name, '과', '와')} ${actor.name} (유대 ${combo.bond}) — ×${combo.mult.toFixed(2)}`, 'combo');
           pop(target, '협공!', 'combo');
+          queueTrigger('combo');
         }
         hitEnemy(actor, target, sk, { combo: combo ? combo.mult : 1, breakMult });
         state.lastAllyAttack = { attacker: actor, target };
@@ -483,6 +604,7 @@ Game.registerScreen('battle', {
       reduceShake(target, amount, `${target.name}의 얼어붙음이 풀렸다.`);
       addHeart(actor, g.heart || 0);
       state.lastAllyAttack = null;
+      queueTrigger('grab');
     }
 
     function stay(target) {
@@ -493,8 +615,22 @@ Game.registerScreen('battle', {
       reduceShake(target, amount, `${target.name}의 얼어붙음이 풀렸다.`);
     }
 
+    function swap(out, incoming) {
+      const i = allies.indexOf(out);
+      const j = bench.indexOf(incoming);
+      allies[i] = incoming;
+      bench[j] = out;
+      out.cover = false;
+      out.coverReduce = 0;
+      out.charging = null;
+      incoming.av = R.AV_BASE / incoming.spd;
+      if (state.lastAllyAttack && state.lastAllyAttack.attacker === out) state.lastAllyAttack = null;
+      log(`교대 — ${josa(out.name, '이', '가')} 물러나고 ${josa(incoming.name, '이', '가')} 나선다.`);
+      layoutParty();
+    }
+
     // ===== 명령 입력 =====
-    let pending = null; // { action, skill } 대상 고르는 중
+    let pending = null; // { action, skill, targets, step } 대상 고르는 중
     let resolveCommand = null;
 
     function showDesc(sk, extra = '') {
@@ -525,6 +661,7 @@ Game.registerScreen('battle', {
       const cd = a.cooldowns[sk.id] || 0;
       const grabSk = skill('grab');
       const staySk = skill('stay');
+      const swapSk = skill('swap');
 
       const add = (b, s2) => {
         if (s2) {
@@ -540,18 +677,30 @@ Game.registerScreen('battle', {
         { disabled: a.heart < R.HEART_MAX || !targetsFor(a, heart).length, cls: a.heart >= R.HEART_MAX ? 'ready' : '' }), heart);
       add(actionButton(grabSk.name, '차례 사용', () => choose('grab', grabSk),
         { disabled: !targetsFor(a, grabSk).length }), grabSk);
+      if (hasBench) {
+        add(actionButton(swapSk.name, `대기 ${livingBench().length}명`, () => choose('swap', swapSk),
+          { disabled: !targetsFor(a, swapSk).length }), swapSk);
+      }
       add(actionButton(staySk.name, `선생님 ${state.stayUses}/${staySk.uses}`, () => choose('stay', staySk),
         { disabled: state.stayUses <= 0 || !targetsFor(a, staySk).length, cls: 'teacher' }), staySk);
+    }
+
+    function markTargets(list) {
+      everyUnit().forEach((u) => {
+        u.ui.card.classList.remove('targetable');
+        if (u.ui.mini) u.ui.mini.classList.remove('targetable');
+      });
+      list.forEach((u) => cardOf(u).classList.add('targetable'));
     }
 
     function choose(action, sk) {
       if (state.phase !== 'command') return;
       const list = targetsFor(state.actor, sk);
       if (!list.length) return;
-      pending = { action, skill: sk, targets: list };
+      pending = { action, skill: sk, targets: list, step: 1 };
       state.phase = 'target';
-      units.forEach((u) => u.ui.card.classList.toggle('targetable', list.includes(u)));
-      const hint = pickOne(sk) ? '대상을 누르세요.' : '표시된 대상에게 사용돼요.';
+      markTargets(list);
+      const hint = action === 'swap' ? '물러날 부원을 누르세요.' : pickOne(sk) ? '대상을 누르세요.' : '표시된 대상에게 사용돼요.';
       showDesc(sk, hint);
       actionsEl.replaceChildren();
       if (!pickOne(sk)) actionsEl.appendChild(actionButton('사용', '', () => confirmTarget(list[0])));
@@ -562,7 +711,7 @@ Game.registerScreen('battle', {
       if (state.phase !== 'target') return;
       pending = null;
       state.phase = 'command';
-      units.forEach((u) => u.ui.card.classList.remove('targetable'));
+      markTargets([]);
       renderCommands();
     }
 
@@ -574,8 +723,18 @@ Game.registerScreen('battle', {
     async function confirmTarget(target) {
       if (state.phase !== 'target' || !pending) return;
       const { action, skill: sk } = pending;
+
+      // 교대는 두 단계: 물러날 부원 → 나설 대기 부원
+      if (action === 'swap' && pending.step === 1) {
+        pending = { action, skill: sk, out: target, targets: livingBench(), step: 2 };
+        markTargets(pending.targets);
+        showDesc(sk, `${josa(target.name, '과', '와')} 바꿀 대기 부원을 누르세요.`);
+        return;
+      }
+
+      const out = pending.out;
       pending = null;
-      units.forEach((x) => x.ui.card.classList.remove('targetable'));
+      markTargets([]);
       if (action === 'stay') {
         // 선생님 명령은 차례를 쓰지 않는다
         stay(target);
@@ -586,7 +745,7 @@ Game.registerScreen('battle', {
       }
       state.phase = 'busy';
       actionsEl.replaceChildren();
-      resolveCommand({ action, skill: sk, target });
+      resolveCommand({ action, skill: sk, target, out });
     }
 
     function waitForCommand() {
@@ -624,15 +783,20 @@ Game.registerScreen('battle', {
         a.charging = null;
         await useSkill(a, sk, null, { releasing: true });
         updateUI();
+        await flushTriggers();
         await sleep(700);
         return;
       }
 
+      await runTutorials(`allyTurn:${a.id}`);
+      if (!alive) return;
       const cmd = await waitForCommand();
       if (!alive) return;
       if (cmd.action === 'grab') await grab(a, cmd.target);
+      else if (cmd.action === 'swap') swap(cmd.out, cmd.target);
       else await useSkill(a, cmd.skill, cmd.target);
       updateUI();
+      await flushTriggers();
       await sleep(600);
     }
 
@@ -647,20 +811,27 @@ Game.registerScreen('battle', {
     }
 
     async function enemyTurn(e) {
+      state.enemyTurns += 1;
       actorEl.replaceChildren(el('span', 'bt-actor-name enemy', e.name), el('span', 'bt-actor-sub', '적의 차례'));
       descEl.replaceChildren();
       actionsEl.replaceChildren();
+      await runTutorials('enemyTurn');
+      if (!alive || !livingAllies().length) return;
       if (e.broken) {
         e.broken = false;
         e.weak = e.weakMax;
         log(`${josa(e.name, '은', '는')} 약점이 터져 움직이지 못했다. 약점 게이지가 회복됐다.`);
       } else {
-        const visible = livingAllies().filter((a) => !a.stealth);
-        const pool = visible.length ? visible : livingAllies();
-        const target = pool[Math.floor(Math.random() * pool.length)];
         const action = pickWeighted(e.data.actions);
         log(`${e.name} — ${action.name}${action.line ? ` "${action.line}"` : ''}`, 'enemy');
-        hitAlly(e, target, action);
+        if (action.target === 'all') {
+          for (const a of livingAllies()) hitAlly(e, a, action, { aoe: true });
+        } else {
+          const visible = livingAllies().filter((a) => !a.stealth);
+          const pool = visible.length ? visible : livingAllies();
+          const target = pool[Math.floor(Math.random() * pool.length)];
+          hitAlly(e, target, action);
+        }
       }
       if (e.mark) e.mark -= 1;
       updateUI();
@@ -674,9 +845,10 @@ Game.registerScreen('battle', {
     }
 
     async function loop() {
-      log('악몽 속 그늘이 모여든다.');
+      log(enemies.some((e) => e.data.boss) ? `${josa(enemies.find((e) => e.data.boss).name, '이', '가')} 길을 막아선다.` : '악몽 속 그늘이 모여든다.');
       updateUI();
-      await sleep(500);
+      await sleep(400);
+      await runTutorials('start');
       while (alive) {
         const result = checkEnd();
         if (result) return finish(result);
@@ -703,7 +875,7 @@ Game.registerScreen('battle', {
       const box = el('div', 'bt-result-box');
       box.appendChild(el('h2', null, result === 'win' ? '승리' : '패배'));
       box.appendChild(el('p', null, result === 'win'
-        ? '그늘이 흩어지고, 복도가 조금 밝아졌다.'
+        ? '그림자가 흩어지고, 복도가 조금 밝아졌다.'
         : '모두 쓰러졌다. 악몽에서 튕겨 나왔다.'));
       const row = el('div', 'bt-result-buttons');
       if (params.test) {
@@ -711,8 +883,10 @@ Game.registerScreen('battle', {
         row.appendChild(Game.button('다시 하기', () => Game.go('battle', params), { primary: true }));
       } else if (result === 'win') {
         row.appendChild(Game.button('계속', () => (params.onWin ? params.onWin() : Game.go('result')), { primary: true }));
+      } else if (params.onLose) {
+        row.appendChild(Game.button('계속', () => params.onLose(), { primary: true }));
       } else {
-        row.appendChild(Game.button('부실로', () => (params.onLose ? params.onLose() : Game.go('room'))));
+        row.appendChild(Game.button('부실로', () => Game.go('room')));
         row.appendChild(Game.button('다시 도전', () => Game.go('battle', params), { primary: true }));
       }
       box.appendChild(row);
@@ -732,9 +906,8 @@ Game.registerScreen('battle', {
 
     return () => {
       alive = false;
+      if (closeTutorial) closeTutorial();
       if (Battle.current === state) Battle.current = null;
     };
   },
 });
-
-const Battle = { current: null };

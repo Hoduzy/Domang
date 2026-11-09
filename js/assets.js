@@ -22,6 +22,8 @@ const Assets = (() => {
   const BACKGROUNDS = {
     staff_room: '교무실',
     club_room: '부실',
+    club_room_rain: '부실 — 비 오는 저녁',
+    club_room_dark: '부실 — 정전',
     hallway: '복도',
     classroom: '교실',
     classroom_night: '교실 — 저녁',

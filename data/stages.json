@@ -14,27 +14,27 @@
     },
     {
       "stage": 3,
-      "type": "battle",
+      "type": "story",
       "title": "사고",
-      "enemies": [
-        "shade",
-        "shade"
-      ]
+      "file": "prologue_03",
+      "battle": true
     },
     {
       "stage": 4,
-      "type": "battle",
+      "type": "story",
       "title": "처음 잡은 손",
-      "enemies": [
-        "shade",
-        "shade",
-        "shade"
-      ]
+      "file": "prologue_04",
+      "battle": true
     },
     {
       "stage": 5,
       "type": "story",
-      "title": "귀환"
+      "title": "귀환",
+      "file": "prologue_05"
     }
-  ]
+  ],
+  "chapterTitles": {
+    "0": "프롤로그",
+    "1": "아무도 돌아보지 않는 교실"
+  }
 }

@@ -2,6 +2,7 @@
   {"id": "basic_attack", "owner": null, "slot": "basic", "name": "기본 공격", "desc": "적 하나를 공격한다.", "target": "enemy", "power": 1.0, "break": 10, "heart": 10},
   {"id": "grab", "owner": null, "slot": "grab", "name": "붙잡기", "desc": "내 차례를 써서 흔들리는 동료의 손을 잡는다. 얼어붙음이 풀리고 흔들림이 줄어든다. 유대가 높을수록 많이 회복.", "target": "shaken_ally", "shakeDown": 50, "bondBonus": 5, "heart": 10},
   {"id": "stay", "owner": null, "slot": "command", "name": "곁에 있기", "desc": "선생님 명령. 차례를 쓰지 않는다. 얼어붙음이 풀리고 흔들림이 줄어든다. 의존도가 높을수록 효과가 크다.", "target": "shaken_ally_any", "uses": 3, "shakeDown": 40, "dependencyBonus": 6},
+  {"id": "swap", "owner": null, "slot": "swap", "name": "교대", "desc": "내 차례를 써서 전장의 부원 하나(쓰러진 부원도 가능)를 대기 중인 부원과 바꾼다.", "target": "swap_out"},
   {"id": "hayun_skill", "owner": "hayun", "slot": "skill", "name": "숨죽인 일격", "desc": "적 하나를 공격하고 약점을 크게 깎는다. 숨어 있으면 약점 피해 2배, 대신 모습을 드러낸다. 스킬이 다시 준비되면 다시 숨는다.", "target": "enemy", "power": 1.6, "break": 25, "cooldown": 3, "heart": 15, "effects": [{"type": "stealth_strike", "breakMult": 2}]},
   {"id": "hayun_heart", "owner": "hayun", "slot": "heart", "name": "아무도 모르게", "desc": "적 하나에게 큰 피해를 주고 약점을 크게 깎은 뒤 다시 숨는다.", "target": "enemy", "power": 2.6, "break": 45, "effects": [{"type": "stealth"}]},
   {"id": "seoyeon_skill", "owner": "seoyeon", "slot": "skill", "name": "약점 표시", "desc": "적 하나를 공격하고 표시한다. 표시된 적은 그 적의 차례 2번 동안 약점이 2배로 깎인다.", "target": "enemy", "power": 0.6, "break": 10, "cooldown": 3, "heart": 15, "effects": [{"type": "mark", "turns": 2}]},
