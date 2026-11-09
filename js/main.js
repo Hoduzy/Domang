@@ -3,6 +3,7 @@
  *
  * 화면은 Game.registerScreen(id, { title, render }) 로 등록한다.
  * render(screen, params) 는 Game.buildScreen()으로 만든 틀에 내용을 채운다.
+ * render가 함수를 돌려주면 화면을 떠날 때 그 함수를 불러 정리한다 (타이머 해제 등).
  * 다른 화면으로 갈 때는 Game.go(id, params).
  */
 const Game = (() => {
@@ -10,9 +11,10 @@ const Game = (() => {
   const STAGE_H = 1080;
 
   const screens = {};
-  const data = { characters: [] };
+  const data = { characters: [], npcs: [], stages: {} };
   let stageEl = null;
   let currentId = null;
+  let disposeCurrent = null;
 
   // ===== 화면 크기에 맞춰 16:9 무대 확대/축소 =====
   function fitStage() {
@@ -122,9 +124,14 @@ const Game = (() => {
       console.error(`등록되지 않은 화면: ${id}`);
       return;
     }
+    if (disposeCurrent) {
+      try { disposeCurrent(); } catch (e) { console.error(e); }
+      disposeCurrent = null;
+    }
     const screen = buildScreen(id, { background: def.background });
-    def.render(screen, params);
     stageEl.replaceChildren(screen.root);
+    const dispose = def.render(screen, params);
+    if (typeof dispose === 'function') disposeCurrent = dispose;
     currentId = id;
     if (Save.data && !NO_RESUME_SCREENS.has(id)) Save.update((d) => { d.progress.lastScreen = id; });
   }
@@ -133,11 +140,92 @@ const Game = (() => {
     return data.characters.find((c) => c.id === id);
   }
 
+  /** 부원 + 조연(npcs.json) 중에서 찾기 */
+  function cast(id) {
+    return character(id) || data.npcs.find((c) => c.id === id);
+  }
+
+  function castByName(name) {
+    return data.characters.find((c) => c.name === name) || data.npcs.find((c) => c.name === name);
+  }
+
+  // ===== 스테이지 진행 =====
+  function stageInfo(chapter, stage) {
+    return (data.stages[String(chapter)] || []).find((st) => st.stage === stage) || null;
+  }
+
+  function chapterLabel(chapter) {
+    return chapter === 0 ? '프롤로그' : `${chapter}장`;
+  }
+
+  /** 스테이지를 시작한다. replay: 이미 클리어한 스테이지를 다시 보는 경우 */
+  function playStage(chapter, stage, { replay = false } = {}) {
+    const info = stageInfo(chapter, stage);
+    if (!info) {
+      toast('스테이지 정보를 찾을 수 없어요.');
+      return;
+    }
+    if (info.type === 'story' && info.file) {
+      go('dialogue', {
+        file: info.file,
+        heading: `${chapterLabel(chapter)} ${stage}. ${info.title}`,
+        onEnd: () => completeStage(chapter, stage, { replay }),
+      });
+    } else if (info.type === 'battle') {
+      go('formation', { chapter, stage });
+    } else {
+      toast(`${chapterLabel(chapter)} ${stage}. ${info.title} — 아직 준비 중이에요.`);
+    }
+  }
+
+  /** 스테이지 클리어 처리. 다음 스테이지가 대화면 이어서 바로 시작한다 */
+  function completeStage(chapter, stage, { replay = false } = {}) {
+    if (replay || !Save.data) {
+      go('chapter');
+      return;
+    }
+    const list = data.stages[String(chapter)] || [];
+    const next = list.find((st) => st.stage === stage + 1);
+    Save.update((d) => {
+      const key = String(chapter);
+      const cleared = new Set(d.progress.cleared[key] || []);
+      cleared.add(stage);
+      d.progress.cleared[key] = [...cleared].sort((a, b) => a - b);
+      if (d.progress.chapter === chapter && d.progress.stage === stage) {
+        if (next) d.progress.stage = next.stage;
+        else if (chapter < 6) { d.progress.chapter = chapter + 1; d.progress.stage = 1; }
+      }
+    });
+    if (next && next.type === 'story' && next.file) {
+      playStage(chapter, next.stage);
+    } else {
+      go('room');
+      toast(`${chapterLabel(chapter)} ${stage}. ${stageInfo(chapter, stage).title} 클리어`);
+    }
+  }
+
+  /** 이어하기: 진행 중인 스테이지가 대화면 바로 시작, 아니면 부실 */
+  function resume() {
+    const { chapter, stage, cleared } = Save.data.progress;
+    const info = stageInfo(chapter, stage);
+    const done = (cleared[String(chapter)] || []).includes(stage);
+    if (info && info.type === 'story' && info.file && !done) playStage(chapter, stage);
+    else go('room');
+  }
+
   // ===== 시작 =====
+  async function loadJSON(path) {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error(`${path} (${res.status})`);
+    return res.json();
+  }
+
   async function loadData() {
-    const res = await fetch('data/characters.json');
-    if (!res.ok) throw new Error(`data/characters.json (${res.status})`);
-    data.characters = await res.json();
+    [data.characters, data.npcs, data.stages] = await Promise.all([
+      loadJSON('data/characters.json'),
+      loadJSON('data/npcs.json'),
+      loadJSON('data/stages.json'),
+    ]);
   }
 
   function showBootError(err) {
@@ -169,7 +257,8 @@ const Game = (() => {
 
   return {
     STAGE_W, STAGE_H, SUPPORT_MESSAGE, data,
-    boot, go, registerScreen, buildScreen, character, el, button, confirm: confirmDialog, toast,
+    boot, go, registerScreen, buildScreen, character, cast, castByName, el, button, confirm: confirmDialog, toast,
+    stageInfo, chapterLabel, playStage, completeStage, resume,
     get currentScreen() { return currentId; },
   };
 })();
@@ -179,17 +268,34 @@ const Game = (() => {
 Game.registerScreen('chapter', {
   title: '장 선택',
   render(s) {
+    if (!Save.data) return;
+    const { chapter, stage, cleared } = Save.data.progress;
+    const done = new Set(cleared[String(chapter)] || []);
+    const list = Game.el('div', 'stage-list');
+    for (const info of Game.data.stages[String(chapter)] || []) {
+      const isDone = done.has(info.stage);
+      const isCurrent = info.stage === stage && !isDone;
+      const status = isDone ? '클리어' : isCurrent ? '진행 중' : '잠김';
+      const b = Game.button(`${info.stage}. ${info.title}`, () => {
+        Game.playStage(chapter, info.stage, { replay: isDone });
+      }, { primary: isCurrent, disabled: !isDone && !isCurrent });
+      b.classList.add('stage-btn');
+      b.appendChild(Game.el('span', 'stage-status', `${info.type === 'battle' ? '전투' : '대화'} · ${status}`));
+      list.appendChild(b);
+    }
+    s.body.appendChild(Game.el('div', 'stage-chapter', Game.chapterLabel(chapter)));
+    s.body.appendChild(list);
+    s.body.classList.add('chapter-body');
     s.addButton('부실로', () => Game.go('room'));
-    s.addButton('편성', () => Game.go('formation'), { primary: true });
   },
 });
 
 Game.registerScreen('formation', {
   title: '편성',
-  render(s) {
+  render(s, params) {
     for (const c of Game.data.characters) s.body.appendChild(Assets.standing(c, 'default', 'card'));
     s.addButton('장 선택으로', () => Game.go('chapter'));
-    s.addButton('출발', () => Game.go('dialogue'), { primary: true });
+    s.addButton('출발', () => Game.go('battle', params), { primary: true });
   },
 });
 

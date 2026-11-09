@@ -1,0 +1,31 @@
+{
+  "0": [
+    {
+      "stage": 1,
+      "type": "story",
+      "title": "부임",
+      "file": "prologue_01"
+    },
+    {
+      "stage": 2,
+      "type": "story",
+      "title": "첫 만남",
+      "file": "prologue_02"
+    },
+    {
+      "stage": 3,
+      "type": "battle",
+      "title": "사고"
+    },
+    {
+      "stage": 4,
+      "type": "battle",
+      "title": "처음 잡은 손"
+    },
+    {
+      "stage": 5,
+      "type": "story",
+      "title": "귀환"
+    }
+  ]
+}

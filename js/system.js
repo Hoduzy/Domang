@@ -2,9 +2,7 @@
  * system.js — 주제 안내, 타이틀, 설정 화면
  */
 
-function chapterLabel(chapter) {
-  return chapter === 0 ? '프롤로그' : `${chapter}장`;
-}
+const chapterLabel = (chapter) => Game.chapterLabel(chapter);
 
 function supportBox(className = '') {
   const box = Game.el('div', `support-box ${className}`.trim());
@@ -41,14 +39,14 @@ Game.registerScreen('title', {
         if (!ok) return;
       }
       Save.startNew();
-      Game.go('room');
+      Game.playStage(0, 1);
     }, { primary: !hasSave });
     s.addButton('이어하기', () => {
       if (!Save.load()) {
         Game.toast('저장 데이터를 읽지 못했어요.');
         return;
       }
-      Game.go('room');
+      Game.resume();
     }, { primary: hasSave, disabled: !hasSave });
   },
 });

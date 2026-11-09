@@ -24,6 +24,7 @@
  *   },
  *   bonds: { "hayun+seojin": 0, ... }  부원 두 명 사이의 유대. 아이디를 정해진 순서로 이은 키 (15쌍)
  *   memoryFragments: { hayun: ["fragment_id", ...], ... }  찾은 기억 조각
+ *   flags: { prologue_first_answer: "unsure", ... }  대사 선택 결과 등 스토리 기록 (대사 파일의 remember)
  *   promises: [                        얻은 약속
  *     { id, type: "smile"|"trust"|"tomorrow", grade: "bronze"|"silver"|"gold",
  *       owner: "hayun", equippedBy: null | "hayun", obtainedAt }
@@ -76,6 +77,7 @@ const Save = (() => {
       characters,
       bonds,
       memoryFragments,
+      flags: {},
       promises: [],
     };
   }
@@ -128,6 +130,12 @@ const Save = (() => {
     for (const id of IDS) {
       if (Array.isArray(frags[id])) {
         d.memoryFragments[id] = [...new Set(frags[id].filter((f) => typeof f === 'string'))];
+      }
+    }
+
+    if (isObj(raw.flags)) {
+      for (const [k, v] of Object.entries(raw.flags)) {
+        if (['string', 'number', 'boolean'].includes(typeof v)) d.flags[k] = v;
       }
     }
 

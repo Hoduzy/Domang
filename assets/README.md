@@ -27,6 +27,10 @@
 
 표정 이미지가 아직 없고 `아이디_default.png`만 있으면 기본 표정을 대신 보여줘요.
 
+## 조연
+
+`data/npcs.json`에 있는 조연도 같은 규칙을 따라요. 교감은 `vice_principal`이에요. 예: `assets/characters/vice_principal_default.png`
+
 ## 악몽 속 모습 — `assets/characters/아이디_nightmare.png`
 
 예: `assets/characters/dohyeon_nightmare.png`
@@ -39,6 +43,7 @@
 | `club_room` | 부실 |
 | `hallway` | 복도 |
 | `classroom` | 교실 |
+| `classroom_night` | 교실 — 저녁 |
 | `schoolyard` | 운동장 |
 | `flowerbed` | 학교 뒤 화단 |
 | `library` | 도서관 |

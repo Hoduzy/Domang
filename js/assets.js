@@ -24,6 +24,7 @@ const Assets = (() => {
     club_room: '부실',
     hallway: '복도',
     classroom: '교실',
+    classroom_night: '교실 — 저녁',
     schoolyard: '운동장',
     flowerbed: '학교 뒤 화단',
     library: '도서관',
