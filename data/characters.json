@@ -1,0 +1,8 @@
+[
+  { "id": "hayun",   "name": "하윤", "grade": 1, "chapter": 1, "color": "#9d95ad", "colorName": "바랜 라벤더 회색" },
+  { "id": "seojin",  "name": "서진", "grade": 3, "chapter": 2, "color": "#2c3e6b", "colorName": "남색과 흰색" },
+  { "id": "dohyeon", "name": "도현", "grade": 2, "chapter": 3, "color": "#c98a5a", "colorName": "빛바랜 주황" },
+  { "id": "yuna",    "name": "유나", "grade": 2, "chapter": 4, "color": "#f0a8c0", "colorName": "분홍과 레몬색" },
+  { "id": "jiho",    "name": "지호", "grade": 1, "chapter": 5, "color": "#2f5a5c", "colorName": "어두운 청록과 회색" },
+  { "id": "eunjae",  "name": "은재", "grade": 2, "chapter": 6, "color": "#5d8a62", "colorName": "차분한 초록과 노란색 포인트" }
+]
