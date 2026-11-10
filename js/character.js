@@ -129,6 +129,7 @@ Game.registerScreen('character', {
         const sk = skillMap.get(c.skills[slot]);
         const sl = rec.skillLevels[slot] || 1;
         const row = el('div', 'cs-skill');
+        row.appendChild(Assets.icon(`skill_${c.id}_${slot}`, 'cs-skill-icon'));
         const text = el('div', 'cs-skill-text');
         text.appendChild(el('div', 'cs-skill-name', `${slot === 'heart' ? '마음 스킬' : '스킬'} · ${sk.name}`));
         const pct = Math.round((Growth.skillMultiplier(sl) - 1) * 100);

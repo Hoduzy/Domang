@@ -157,6 +157,8 @@ Game.registerScreen('battle', {
 
     // ===== 화면 =====
     s.root.classList.add('battle');
+    // 스테이지마다 다른 악몽 배경 (없으면 기본 악몽 복도)
+    if (params.bg) s.bg.replaceChildren(Assets.background(params.bg));
     const timeline = el('div', 'bt-timeline');
     const field = el('div', 'bt-field');
     const partySide = el('div', 'bt-party-side');
@@ -224,7 +226,9 @@ Game.registerScreen('battle', {
       u.ui = { card, hp: bar('hp', '체력'), weak: bar('weak', '약점'), tags: el('div', 'bt-tags') };
       info.append(u.ui.hp.wrap, u.ui.weak.wrap, u.ui.tags);
       card.appendChild(info);
-      card.appendChild(Assets.enemy(u.id, u.name, 'bt-pic'));
+      // 같은 적이 여럿이면 images 를 돌아가며 쓴다 (그늘 A·B·C → shade_1·2·3)
+      const imgs = u.data.images && u.data.images.length ? u.data.images : [u.id];
+      card.appendChild(Assets.enemy(imgs[u.index % imgs.length], u.name, 'bt-pic'));
       card.addEventListener('click', () => onUnitTap(u));
       enemyEl.appendChild(card);
     }
@@ -700,10 +704,11 @@ Game.registerScreen('battle', {
       descEl.appendChild(el('div', 'bt-desc-text', sk.desc + (extra ? ` ${extra}` : '')));
     }
 
-    function actionButton(label, sub, onClick, { disabled = false, cls = '' } = {}) {
+    function actionButton(label, sub, onClick, { disabled = false, cls = '', icon = null } = {}) {
       const b = Game.button('', onClick, { disabled });
       b.classList.add('bt-action');
       if (cls) b.classList.add(cls);
+      if (icon) b.appendChild(Assets.icon(icon, 'bt-action-icon'));
       b.appendChild(el('span', 'bt-action-name', label));
       if (sub) b.appendChild(el('span', 'bt-action-sub', sub));
       return b;
@@ -730,19 +735,20 @@ Game.registerScreen('battle', {
         }
         actionsEl.appendChild(b);
       };
-      add(actionButton(basic.name, '', () => choose('skill', basic)), basic);
+      const ic = (slot) => `skill_${a.id}_${slot}`;
+      add(actionButton(basic.name, '', () => choose('skill', basic), { icon: ic('basic') }), basic);
       add(actionButton(sk.name, cd ? `${cd}턴 남음` : '스킬', () => choose('skill', sk),
-        { disabled: cd > 0 || !targetsFor(a, sk).length }), sk);
+        { disabled: cd > 0 || !targetsFor(a, sk).length, icon: ic('skill') }), sk);
       add(actionButton(heart.name, a.heart >= R.HEART_MAX ? '마음 스킬' : `마음 ${a.heart}/100`, () => choose('skill', heart),
-        { disabled: a.heart < R.HEART_MAX || !targetsFor(a, heart).length, cls: a.heart >= R.HEART_MAX ? 'ready' : '' }), heart);
+        { disabled: a.heart < R.HEART_MAX || !targetsFor(a, heart).length, cls: a.heart >= R.HEART_MAX ? 'ready' : '', icon: ic('heart') }), heart);
       add(actionButton(grabSk.name, '차례 사용', () => choose('grab', grabSk),
-        { disabled: !targetsFor(a, grabSk).length }), grabSk);
+        { disabled: !targetsFor(a, grabSk).length, icon: 'cmd_hold' }), grabSk);
       if (hasBench) {
         add(actionButton(swapSk.name, `대기 ${livingBench().length}명`, () => choose('swap', swapSk),
           { disabled: !targetsFor(a, swapSk).length }), swapSk);
       }
       add(actionButton(staySk.name, `선생님 ${state.stayUses}/${staySk.uses}`, () => choose('stay', staySk),
-        { disabled: state.stayUses <= 0 || !targetsFor(a, staySk).length, cls: 'teacher' }), staySk);
+        { disabled: state.stayUses <= 0 || !targetsFor(a, staySk).length, cls: 'teacher', icon: 'cmd_stay' }), staySk);
     }
 
     function markTargets(list) {

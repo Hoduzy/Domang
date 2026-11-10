@@ -53,7 +53,12 @@
       "stage": 2,
       "type": "battle",
       "title": "첫 전투",
-      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투."
+      "desc": "악몽의 규칙을 몸으로 익히는 첫 전투.",
+      "enemies": [
+        "ch1_turned",
+        "ch1_turned"
+      ],
+      "bg": "ch1_classroom"
     },
     {
       "stage": 3,
@@ -65,7 +70,12 @@
       "stage": 4,
       "type": "battle",
       "title": "과거의 기억",
-      "desc": "그 아이의 과거 기억이 적으로 나타난다."
+      "desc": "그 아이의 과거 기억이 적으로 나타난다.",
+      "enemies": [
+        "ch1_turned",
+        "ch1_eraser"
+      ],
+      "bg": "ch1_classroom"
     },
     {
       "stage": 5,
@@ -77,13 +87,25 @@
       "stage": 6,
       "type": "battle",
       "title": "고비",
-      "desc": "흔들림 공격이 강해지는 고비."
+      "desc": "흔들림 공격이 강해지는 고비.",
+      "enemies": [
+        "ch1_eraser",
+        "ch1_turned",
+        "ch1_eraser"
+      ],
+      "bg": "ch1_classroom"
     },
     {
       "stage": 7,
       "type": "battle",
       "title": "가장 아픈 기억",
-      "desc": "가장 아픈 기억과 마주한다."
+      "desc": "가장 아픈 기억과 마주한다.",
+      "enemies": [
+        "ch1_turned",
+        "ch1_eraser",
+        "ch1_turned"
+      ],
+      "bg": "ch1_erased"
     },
     {
       "stage": 8,
@@ -95,13 +117,23 @@
       "stage": 9,
       "type": "battle",
       "title": "부르는 목소리",
-      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다."
+      "desc": "갇혀 있던 그 아이가 처음으로 일행을 부른다.",
+      "enemies": [
+        "ch1_eraser",
+        "ch1_eraser",
+        "ch1_turned"
+      ],
+      "bg": "ch1_erased"
     },
     {
       "stage": 10,
       "type": "boss",
       "title": "그 아이의 상처",
-      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다."
+      "desc": "그 아이 자신의 상처와 마주하고, 받아들인다.",
+      "enemies": [
+        "ch1_crowd"
+      ],
+      "bg": "ch1_erased"
     }
   ],
   "2": [

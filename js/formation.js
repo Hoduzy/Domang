@@ -85,6 +85,7 @@ Game.registerScreen('formation', {
       slot.classList.remove('gold', 'silver', 'bronze');
       if (pr) {
         slot.classList.add(pr.grade);
+        slot.appendChild(Assets.icon(`promise_${pr.type}_${pr.grade}`, 'fm-slot-icon'));
         slot.appendChild(el('span', 'fm-slot-name', promiseLabel(pr)));
         if (pr.line) slot.appendChild(el('span', 'fm-slot-line', `"${pr.line}"`));
       } else {
@@ -140,6 +141,7 @@ Game.registerScreen('formation', {
           render();
         }, { primary: on });
         item.classList.add('fm-picker-item', pr.grade);
+        item.appendChild(Assets.icon(`promise_${pr.type}_${pr.grade}`, 'fm-picker-icon'));
         item.appendChild(el('span', 'fm-picker-name', promiseLabel(pr) + (on ? ' (착용 중)' : '')));
         item.appendChild(el('span', 'fm-picker-effect', promiseEffect(pr)));
         if (pr.line) item.appendChild(el('span', 'fm-picker-line', `${c.name}: "${pr.line}"`));
@@ -162,6 +164,7 @@ Game.registerScreen('formation', {
       const battleParams = {
         party: picked.slice(),
         enemies: (info && info.enemies) || (info && info.type === 'boss' ? ['shade', 'shade', 'shade'] : ['shade', 'shade']),
+        bg: info && info.bg,
         onWin: () => (params.replay ? Game.go('chapter', { chapter }) : Game.completeStage(chapter, stage)),
       };
       Game.go('battle', battleParams);

@@ -32,35 +32,40 @@
       "name": "같이 공부하기",
       "mood": -1,
       "trust": 1,
-      "confidence": 2
+      "confidence": 2,
+      "icon": "act_study"
     },
     {
       "id": "walk",
       "name": "운동장 산책",
       "mood": 1,
       "trust": 0,
-      "confidence": 1
+      "confidence": 1,
+      "icon": "act_walk"
     },
     {
       "id": "snack",
       "name": "매점 간식",
       "mood": 2,
       "trust": 0,
-      "confidence": 0
+      "confidence": 0,
+      "icon": "act_snack"
     },
     {
       "id": "listen",
       "name": "이야기 들어주기",
       "mood": 0,
       "trust": 2,
-      "confidence": 0
+      "confidence": 0,
+      "icon": "act_talk"
     },
     {
       "id": "play",
       "name": "같이 놀기",
       "mood": 2,
       "trust": 1,
-      "confidence": 0
+      "confidence": 0,
+      "icon": "act_play"
     },
     {
       "id": "stay",
@@ -68,7 +73,8 @@
       "mood": 0,
       "trust": 1,
       "confidence": 0,
-      "costRate": 0.5
+      "costRate": 0.5,
+      "icon": "act_stay"
     },
     {
       "id": "rest",
@@ -76,7 +82,8 @@
       "mood": 0,
       "trust": 0,
       "confidence": 0,
-      "rest": true
+      "rest": true,
+      "icon": "act_rest"
     }
   ],
   "stats": [

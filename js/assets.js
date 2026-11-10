@@ -6,10 +6,12 @@
  *                표정: default, smile, sad, surprised, angry
  *   악몽 속 모습 assets/characters/{아이디}_nightmare.png
  *   배경         assets/backgrounds/{배경키}.png
- *   적           assets/enemies/{적키}.png
+ *   적           assets/enemies/{이미지 키}.png  (enemies.json 의 images)
+ *   CG           assets/cg/{키}.png
+ *   아이콘       assets/ui/{키}.png  (skill_아이디_basic, promise_smile_gold, cmd_stay, act_study …)
  *
  * 이미지가 없으면 색 네모 안에 이름을 글자로 보여준다.
- * 표정 이미지가 없고 default 이미지만 있으면 default를 대신 보여준다.
+ * 그 표정 이미지가 없으면 default, 그다음 다른 표정 중 있는 것을 대신 보여준다.
  */
 const Assets = (() => {
   const CHARACTER_IDS = ['hayun', 'seoyeon', 'dahyeon', 'yuna', 'jiyu', 'eunchae'];
@@ -27,8 +29,10 @@ const Assets = (() => {
     hallway: '복도',
     classroom: '교실',
     classroom_night: '교실 — 저녁',
-    schoolyard: '운동장',
-    flowerbed: '학교 뒤 화단',
+    field: '운동장',
+    garden: '학교 뒤 화단',
+    ch1_classroom: '악몽 — 끝없는 교실',
+    ch1_erased: '악몽 — 지워지는 교실',
     library: '도서관',
     nightmare_hallway: '악몽 — 끝없는 복도',
   };
@@ -38,6 +42,8 @@ const Assets = (() => {
     nightmare: (id) => `assets/characters/${id}_nightmare.png`,
     background: (key) => `assets/backgrounds/${key}.png`,
     enemy: (key) => `assets/enemies/${key}.png`,
+    cg: (key) => `assets/cg/${key}.png`,
+    ui: (key) => `assets/ui/${key}.png`,
   };
 
   // 같은 파일을 여러 번 확인하지 않도록 결과를 기억해 둔다. url → Promise<boolean>
@@ -124,8 +130,9 @@ const Assets = (() => {
 
   function standing(character, expression = 'default', className = 'standing') {
     const expr = EXPRESSIONS.includes(expression) ? expression : 'default';
-    const candidates = [PATHS.character(character.id, expr)];
-    if (expr !== 'default') candidates.push(PATHS.character(character.id, 'default'));
+    // 그 표정이 없으면 기본 → 나머지 표정 순서로 있는 그림을 쓴다
+    const order = [expr, 'default', ...EXPRESSIONS.filter((e) => e !== expr && e !== 'default')];
+    const candidates = order.map((e) => PATHS.character(character.id, e));
     return picture({
       candidates,
       name: character.name,
@@ -154,6 +161,33 @@ const Assets = (() => {
     });
   }
 
+  /** CG (여러 명이 나오는 장면 그림). 배경처럼 화면을 채운다 */
+  function cg(key) {
+    return picture({
+      candidates: [PATHS.cg(key)],
+      name: key,
+      sub: 'CG',
+      className: 'fit-cover',
+    });
+  }
+
+  /** 아이콘 하나 (assets/ui). 없으면 아무것도 보이지 않는 빈 칸 */
+  function icon(key, className = 'icon') {
+    const el = document.createElement('span');
+    el.className = `ui-icon ${className}`.trim();
+    probe(PATHS.ui(key)).then((ok) => {
+      if (!ok) return;
+      const img = document.createElement('img');
+      img.src = PATHS.ui(key);
+      img.alt = '';
+      img.draggable = false;
+      el.appendChild(img);
+      el.classList.add('loaded');
+    });
+    return el;
+  }
+
+  /** key 는 이미지 키 또는 이미지 키 목록 (목록이면 index 번째) */
   function enemy(key, name, className = 'enemy') {
     return picture({
       candidates: [PATHS.enemy(key)],
@@ -165,6 +199,6 @@ const Assets = (() => {
 
   return {
     CHARACTER_IDS, EXPRESSIONS, BACKGROUNDS, PATHS,
-    picture, standing, nightmare, background, enemy,
+    picture, standing, nightmare, background, enemy, cg, icon,
   };
 })();

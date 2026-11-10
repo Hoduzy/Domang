@@ -1,6 +1,6 @@
 [
   {"bg": "club_room_rain", "show": [], "narration": "[일주일 뒤. 비가 쏟아지는 저녁 6시 50분 / 부실]"},
-  {"narration": "(부실엔 처음으로 사람이 있다. 하지만 다들 '동아리 때문에' 온 건 아니다)"},
+  {"cg": "prologue_1", "narration": "(부실엔 처음으로 사람이 있다. 하지만 다들 '동아리 때문에' 온 건 아니다)"},
   {"speaker": "다현", "face": "default", "text": "우산 놓고 와서요. 비 그칠 때까지만."},
   {"speaker": "유나", "face": "smile", "text": "저는 그냥 지나가다가! 불 켜져 있길래!"},
   {"speaker": "서연", "face": "default", "text": "도서관이 6시에 닫아서요. 여기 7시까지라고 쓰여 있었고."},

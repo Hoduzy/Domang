@@ -153,6 +153,7 @@ Game.registerScreen('dialogue', {
       speakerId: null,   // 말하는 캐릭터 (나머지는 어둡게)
       dimAll: false,     // 화면 밖 인물(선생님 등)이 말할 때 모두 어둡게
       bgKey: null,
+      cgOn: false,      // CG 가 보이는 중
       mode: 'loading',   // loading | typing | shown | title | choice | ended | error
       auto: false,
       skip: false,
@@ -195,10 +196,11 @@ Game.registerScreen('dialogue', {
     }
 
     // ----- 배경 -----
+    /** key 가 'cg:이름' 이면 CG, 아니면 배경 */
     function setBackground(key) {
       if (key === state.bgKey) return;
       state.bgKey = key;
-      const pic = Assets.background(key);
+      const pic = key.startsWith('cg:') ? Assets.cg(key.slice(3)) : Assets.background(key);
       pic.classList.add('dlg-bg-in');
       // 바로 아래 한 장만 남겨 겹쳐 보이게(페이드) 하고, 그보다 오래된 배경은 지운다
       while (s.bg.children.length > 1) s.bg.firstElementChild.remove();
@@ -239,8 +241,17 @@ Game.registerScreen('dialogue', {
     }
 
     function applyLine(line) {
-      if (line.bg) setBackground(line.bg);
-      if (Array.isArray(line.show)) state.cast = line.show.map(toCastEntry).filter((e) => Game.cast(e.id));
+      // CG: 여러 명이 함께 나오는 장면 그림. 보이는 동안은 스탠딩을 내린다. 다음 bg 가 오면 끝난다
+      if (line.cg) {
+        setBackground(`cg:${line.cg}`);
+        state.cgOn = true;
+        state.cast = [];
+      }
+      if (line.bg) {
+        setBackground(line.bg);
+        state.cgOn = false;
+      }
+      if (Array.isArray(line.show) && !state.cgOn) state.cast = line.show.map(toCastEntry).filter((e) => Game.cast(e.id));
       applyValues(line);
 
       // 말하는 사람이 등장인물이면 무대에 올리고 표정을 바꾼다
@@ -248,7 +259,7 @@ Game.registerScreen('dialogue', {
       state.dimAll = false;
       if (line.speaker || line.who) {
         const member = line.who ? Game.cast(line.who) : Game.castByName(line.speaker);
-        if (member && line.offstage) {
+        if (member && (line.offstage || state.cgOn)) {
           // 화면 밖에서 말함: 무대에 올리지 않는다
           state.dimAll = true;
         } else if (member) {
@@ -388,6 +399,7 @@ Game.registerScreen('dialogue', {
         vars: { ...state.vars },
         cast: state.cast.map((c) => ({ ...c })),
         bgKey: state.bgKey,
+        cgOn: state.cgOn,
         log: state.log.slice(-300),
       };
       const resumeParams = { ...params, resume: snapshot };
@@ -553,6 +565,7 @@ Game.registerScreen('dialogue', {
           state.cast = r.cast.map((c) => ({ ...c }));
           state.log = r.log.slice();
           if (r.bgKey) setBackground(r.bgKey);
+          state.cgOn = Boolean(r.cgOn);
           renderCast();
         }
         run();

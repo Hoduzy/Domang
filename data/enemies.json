@@ -23,7 +23,12 @@
       }
     ],
     "exp": 40,
-    "material": 1
+    "material": 1,
+    "images": [
+      "shade_1",
+      "shade_2",
+      "shade_3"
+    ]
   },
   {
     "id": "closed_door",
@@ -58,6 +63,105 @@
       }
     ],
     "exp": 220,
-    "material": 6
+    "material": 6,
+    "images": [
+      "boss_door"
+    ]
+  },
+  {
+    "id": "ch1_turned",
+    "name": "등 돌린 아이",
+    "hp": 1000,
+    "atk": 95,
+    "spd": 96,
+    "weak": 70,
+    "exp": 45,
+    "material": 1,
+    "images": [
+      "ch1_enemy_1"
+    ],
+    "actions": [
+      {
+        "id": "ignore",
+        "name": "외면",
+        "power": 1.0,
+        "weight": 55
+      },
+      {
+        "id": "whisper",
+        "name": "속삭임",
+        "power": 0.35,
+        "shake": 30,
+        "weight": 35,
+        "line": "…아무도 안 돌아봐."
+      }
+    ]
+  },
+  {
+    "id": "ch1_eraser",
+    "name": "지우개 얼룩",
+    "hp": 850,
+    "atk": 105,
+    "spd": 108,
+    "weak": 55,
+    "exp": 45,
+    "material": 1,
+    "images": [
+      "ch1_enemy_2"
+    ],
+    "actions": [
+      {
+        "id": "erase",
+        "name": "지우기",
+        "power": 1.1,
+        "weight": 60
+      },
+      {
+        "id": "whisper",
+        "name": "속삭임",
+        "power": 0.35,
+        "shake": 30,
+        "weight": 35,
+        "line": "…원래 없던 애야."
+      }
+    ]
+  },
+  {
+    "id": "ch1_crowd",
+    "name": "돌아보지 않는 교실",
+    "boss": true,
+    "hp": 3600,
+    "atk": 110,
+    "spd": 110,
+    "weak": 140,
+    "exp": 260,
+    "material": 8,
+    "images": [
+      "ch1_boss"
+    ],
+    "actions": [
+      {
+        "id": "crowd",
+        "name": "군중",
+        "power": 1.25,
+        "weight": 40
+      },
+      {
+        "id": "silence",
+        "name": "침묵",
+        "power": 0.55,
+        "target": "all",
+        "weight": 30,
+        "line": "…"
+      },
+      {
+        "id": "whisper",
+        "name": "속삭임",
+        "power": 0.35,
+        "shake": 30,
+        "weight": 35,
+        "line": "불러도 아무도 대답 안 해."
+      }
+    ]
   }
 ]

@@ -339,6 +339,7 @@ Game.registerScreen('counsel', {
         if (a.id === pref.favorite) b.classList.add('fav');
         if (a.id === pref.hard && !hardOk) b.classList.add('hard');
         b.dataset.act = a.id;
+        if (a.icon) b.appendChild(Assets.icon(a.icon, 'cn-act-icon'));
         b.appendChild(el('span', 'cn-act-name', a.name));
         const eff = C.stats.map((st) => {
           const n = a[st.id];
@@ -561,6 +562,7 @@ Game.registerScreen('counsel', {
       area.querySelectorAll('.cn-tie, .cn-sub').forEach((n) => n.remove());
       const card = el('div', `cn-promise ${pr.grade}`);
       card.appendChild(el('div', 'cn-promise-tag', '약속을 받았어요'));
+      card.appendChild(Assets.icon(`promise_${pr.type}_${pr.grade}`, 'cn-promise-icon'));
       card.appendChild(el('div', 'cn-promise-name', `${Game.data.promises.types[pr.type].name} · ${GRADE_LABEL[pr.grade]}`));
       card.appendChild(el('div', 'cn-promise-eff', Game.data.promises.effects[pr.type][pr.grade]));
       if (pr.line) card.appendChild(el('div', 'cn-promise-line', `${c.name}: "${pr.line}"`));
