@@ -73,8 +73,10 @@
 
 ## SD와 동작 시트 — `assets/characters`
 
-- `아이디_sd.png`: 뒷모습 SD 한 장
-- `아이디_attack.png` (6프레임), `아이디_skill.png` (6프레임), `아이디_heart.png` (8프레임): 가로로 이어진 동작 시트
+- `아이디_sd.png`: 뒷모습 SD 한 장. 전투의 부원 카드에 나와요 (없으면 악몽 속 모습).
+- `아이디_attack.png` (6프레임), `아이디_skill.png` (6프레임), `아이디_heart.png` (8프레임): 기본 공격·스킬·마음 스킬을 쓸 때 한 번 재생돼요.
+- 동작 시트는 프레임이 모두 같은 크기이고 발 위치(바닥선)가 같게 다시 만든 것이에요. 프레임 수와 크기는 `data/sprites.json`에 있어요.
+- 배경을 지우기 전 원본은 `assets/originals`에 있어요.
 
 ## CG — `assets/cg/키.png`
 
@@ -94,6 +96,7 @@
 | `cmd_hold`, `cmd_stay` | 전투의 붙잡기, 곁에 있기 |
 | `promise_종류_등급` (smile/trust/tomorrow × bronze/silver/gold) | 편성 약속 슬롯, 상담 결과 |
 | `act_study/walk/snack/talk/play/stay/rest` | 방과후 상담 활동 |
-| `logo`, `title_bg` | 타이틀 (아직 없음) |
+| `logo` | 타이틀 |
+| `title_bg` | 타이틀 배경 (아직 없음) |
 
 원본 아이콘 시트는 `assets/ui/sheets`, 배경을 지우기 전 원본은 `assets/originals`, 같은 이름 후보 중 쓰지 않은 그림은 `assets/extra`에 있어요.

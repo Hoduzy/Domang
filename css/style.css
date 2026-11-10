@@ -1471,3 +1471,10 @@ input[type=range]:focus-visible { outline: 4px solid var(--accent); outline-offs
 .screen.room:has(.screen-bg .pic.loaded) .room-furniture { display: none; }
 .room-member .pic.room-pic { width: 230px; height: 400px; }
 .room-bubble { bottom: 640px; }
+
+/* ===== SD / 동작 시트 ===== */
+.bt-unit.ally .pic.bt-pic.loaded .pic-placeholder { display: none; }
+.sprite { background-repeat: no-repeat; pointer-events: none; }
+.bt-unit .sprite.bt-sprite { position: relative; z-index: 2; flex: 0 0 auto; }
+.title-logo { display: flex; align-items: center; gap: 24px; }
+.title-logo-mark { width: 200px; height: 200px; }

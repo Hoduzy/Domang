@@ -161,6 +161,46 @@ const Assets = (() => {
     });
   }
 
+  /** 전투용 뒷모습 SD. 없으면 악몽 속 모습 → 대체 표시 */
+  function sd(character, className = 'sd') {
+    return picture({
+      candidates: [`assets/characters/${character.id}_sd.png`, PATHS.nightmare(character.id)],
+      name: character.name,
+      sub: 'SD',
+      color: character.color,
+      className,
+    });
+  }
+
+  /**
+   * 동작 시트 애니메이션 (아이디_attack / _skill / _heart).
+   * data/sprites.json 의 frames, frameWidth, frameHeight 를 쓴다. 시트가 없으면 null.
+   * 돌려준 요소의 play() 는 한 번 재생이 끝나면 resolve 된다.
+   */
+  function sprite(id, kind, frameMs = 90) {
+    const key = `${id}_${kind}`;
+    const meta = (Game.data.sprites || {})[key];
+    if (!meta) return null;
+    const url = `assets/characters/${key}.png`;
+    const el = document.createElement('div');
+    el.className = 'sprite';
+    el.meta = meta;
+    el.style.backgroundImage = `url("${url}")`;
+    el.style.backgroundSize = `${meta.frames * 100}% 100%`;
+    el.play = () => probe(url).then((ok) => new Promise((resolve) => {
+      if (!ok) return resolve(false);
+      let i = 0;
+      const step = () => {
+        el.style.backgroundPosition = `${(i / (meta.frames - 1)) * 100}% 0`;
+        i += 1;
+        if (i < meta.frames) setTimeout(step, frameMs * (typeof BattleTiming !== 'undefined' ? BattleTiming.scale : 1));
+        else setTimeout(() => resolve(true), frameMs);
+      };
+      step();
+    }));
+    return el;
+  }
+
   /** CG (여러 명이 나오는 장면 그림). 배경처럼 화면을 채운다 */
   function cg(key) {
     return picture({
@@ -199,6 +239,6 @@ const Assets = (() => {
 
   return {
     CHARACTER_IDS, EXPRESSIONS, BACKGROUNDS, PATHS,
-    picture, standing, nightmare, background, enemy, cg, icon,
+    picture, standing, nightmare, sd, sprite, background, enemy, cg, icon,
   };
 })();

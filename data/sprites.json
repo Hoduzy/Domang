@@ -1,0 +1,92 @@
+{
+  "hayun_attack": {
+    "frames": 6,
+    "frameWidth": 536,
+    "frameHeight": 456
+  },
+  "hayun_skill": {
+    "frames": 6,
+    "frameWidth": 453,
+    "frameHeight": 509
+  },
+  "hayun_heart": {
+    "frames": 8,
+    "frameWidth": 419,
+    "frameHeight": 451
+  },
+  "seoyeon_attack": {
+    "frames": 6,
+    "frameWidth": 489,
+    "frameHeight": 453
+  },
+  "seoyeon_skill": {
+    "frames": 6,
+    "frameWidth": 463,
+    "frameHeight": 437
+  },
+  "seoyeon_heart": {
+    "frames": 8,
+    "frameWidth": 450,
+    "frameHeight": 443
+  },
+  "dahyeon_attack": {
+    "frames": 6,
+    "frameWidth": 521,
+    "frameHeight": 529
+  },
+  "dahyeon_skill": {
+    "frames": 6,
+    "frameWidth": 451,
+    "frameHeight": 536
+  },
+  "dahyeon_heart": {
+    "frames": 8,
+    "frameWidth": 455,
+    "frameHeight": 517
+  },
+  "yuna_attack": {
+    "frames": 6,
+    "frameWidth": 426,
+    "frameHeight": 522
+  },
+  "yuna_skill": {
+    "frames": 6,
+    "frameWidth": 427,
+    "frameHeight": 527
+  },
+  "yuna_heart": {
+    "frames": 8,
+    "frameWidth": 475,
+    "frameHeight": 504
+  },
+  "jiyu_attack": {
+    "frames": 6,
+    "frameWidth": 510,
+    "frameHeight": 486
+  },
+  "jiyu_skill": {
+    "frames": 6,
+    "frameWidth": 416,
+    "frameHeight": 560
+  },
+  "jiyu_heart": {
+    "frames": 8,
+    "frameWidth": 488,
+    "frameHeight": 490
+  },
+  "eunchae_attack": {
+    "frames": 6,
+    "frameWidth": 426,
+    "frameHeight": 505
+  },
+  "eunchae_skill": {
+    "frames": 6,
+    "frameWidth": 434,
+    "frameHeight": 521
+  },
+  "eunchae_heart": {
+    "frames": 8,
+    "frameWidth": 562,
+    "frameHeight": 491
+  }
+}

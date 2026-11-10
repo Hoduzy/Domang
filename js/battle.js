@@ -200,7 +200,7 @@ Game.registerScreen('battle', {
     for (const u of [...allies, ...bench]) {
       const card = el('div', 'bt-unit ally');
       card.dataset.uid = u.uid;
-      card.appendChild(Assets.nightmare(u.data, 'bt-pic'));
+      card.appendChild(Assets.sd(u.data, 'bt-pic'));
       const info = el('div', 'bt-info');
       info.appendChild(el('div', 'bt-name', u.name));
       u.ui = { card, hp: bar('hp', '체력'), shake: bar('shake', '흔들림'), heart: bar('heart', '마음'), tags: el('div', 'bt-tags') };
@@ -571,8 +571,30 @@ Game.registerScreen('battle', {
       };
     }
 
+    /** 행동 애니메이션: SD 그림을 잠시 동작 시트로 바꿔 한 번 재생한다 */
+    async function animate(u, kind) {
+      const sp = Assets.sprite(u.id, kind);
+      if (!sp) return;
+      const pic = u.ui.card.querySelector('.bt-pic');
+      sp.classList.add('bt-sprite');
+      // 프레임 비율 그대로, SD 칸 높이에 맞춘다 (칸보다 넓으면 양옆으로 넘친다)
+      const h = pic.offsetHeight || 330;
+      const w = Math.round(h * sp.meta.frameWidth / sp.meta.frameHeight);
+      sp.style.width = `${w}px`;
+      sp.style.height = `${h}px`;
+      sp.style.marginBottom = `-${h}px`;
+      sp.style.marginLeft = sp.style.marginRight = `${Math.round(((pic.offsetWidth || 250) - w) / 2)}px`;
+      u.ui.card.insertBefore(sp, pic);
+      pic.style.visibility = 'hidden';
+      await sp.play();
+      sp.remove();
+      pic.style.visibility = '';
+    }
+
     async function useSkill(actor, baseSkill, target, { releasing = false } = {}) {
       const sk = scaled(actor, baseSkill);
+      const kind = { basic: 'attack', skill: 'skill', heart: 'heart' }[baseSkill.slot];
+      if (kind && !(baseSkill.effects || []).some((e) => e.type === 'charge' && !releasing)) await animate(actor, kind);
       const effects = sk.effects || [];
       const has = (type) => effects.find((e) => e.type === type);
 

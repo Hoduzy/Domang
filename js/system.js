@@ -29,7 +29,10 @@ Game.registerScreen('notice', {
 Game.registerScreen('title', {
   title: '타이틀',
   render(s) {
-    s.body.appendChild(Game.el('div', 'title-logo', '쉼표부'));
+    const logo = Game.el('div', 'title-logo');
+    logo.appendChild(Assets.icon('logo', 'title-logo-mark'));
+    logo.appendChild(Game.el('span', null, '쉼표부'));
+    s.body.appendChild(logo);
 
     const hasSave = Save.exists();
     s.addButton('설정', () => Game.go('settings', { from: 'title' }));
