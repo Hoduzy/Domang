@@ -161,6 +161,17 @@ const Assets = (() => {
     });
   }
 
+  /** 얼굴 아이콘: 기본 스탠딩의 머리 부분을 확대해 보여준다 */
+  function face(character, className = 'face') {
+    const order = ['default', 'smile', ...EXPRESSIONS.filter((e) => e !== 'default' && e !== 'smile')];
+    return picture({
+      candidates: order.map((e) => PATHS.character(character.id, e)),
+      name: character.name.slice(0, 1),
+      color: character.color,
+      className: `face ${className}`,
+    });
+  }
+
   /** 전투용 뒷모습 SD. 없으면 악몽 속 모습 → 대체 표시 */
   function sd(character, className = 'sd') {
     return picture({
@@ -239,6 +250,6 @@ const Assets = (() => {
 
   return {
     CHARACTER_IDS, EXPRESSIONS, BACKGROUNDS, PATHS,
-    picture, standing, nightmare, sd, sprite, background, enemy, cg, icon,
+    picture, standing, nightmare, face, sd, sprite, background, enemy, cg, icon,
   };
 })();

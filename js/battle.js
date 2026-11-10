@@ -160,24 +160,30 @@ Game.registerScreen('battle', {
     // 스테이지마다 다른 악몽 배경 (없으면 기본 악몽 복도)
     if (params.bg) s.bg.replaceChildren(Assets.background(params.bg));
     const timeline = el('div', 'bt-timeline');
-    const field = el('div', 'bt-field');
-    const partySide = el('div', 'bt-party-side');
-    const benchEl = el('div', 'bt-bench');
-    const partyEl = el('div', 'bt-party');
-    partySide.append(benchEl, partyEl);
+    // 무대: 배경 위에 안개 → 적(위 오른쪽, 멀리) → 아군(아래 왼쪽, 가까이). 마음 스킬 때 통째로 확대된다
+    const world = el('div', 'bt-world');
+    const fog = el('div', 'bt-fog');
+    fog.append(el('i', 'f1'), el('i', 'f2'), el('i', 'f3'));
     const enemyEl = el('div', 'bt-enemies');
-    field.append(partySide, enemyEl);
+    const partyEl = el('div', 'bt-party');
+    world.append(fog, enemyEl, partyEl);
+    // 아래 HUD: 부원 상태(얼굴·게이지) + 행동
+    const hud = el('div', 'bt-hud');
+    const statusEl = el('div', 'bt-status');
+    const benchEl = el('div', 'bt-bench');
     const panel = el('div', 'bt-panel');
     const actorEl = el('div', 'bt-actor');
     const descEl = el('div', 'bt-desc');
     const actionsEl = el('div', 'bt-actions');
     const logEl = el('div', 'bt-log');
-    const left = el('div', 'bt-panel-left');
-    left.append(actorEl, descEl);
-    const right = el('div', 'bt-panel-right');
-    right.append(actionsEl, logEl);
-    panel.append(left, right);
-    s.root.append(timeline, field, panel);
+    const head = el('div', 'bt-panel-head');
+    head.append(actorEl, descEl);
+    panel.append(head, actionsEl, logEl);
+    const leftCol = el('div', 'bt-hud-left');
+    leftCol.append(benchEl, statusEl);
+    hud.append(leftCol, panel);
+    const cutin = el('div', 'bt-cutin');
+    s.root.append(world, timeline, hud, cutin);
 
     const retreatBtn = Game.button('후퇴', async () => {
       if (state.phase === 'ended') return;
@@ -198,43 +204,71 @@ Game.registerScreen('battle', {
     }
 
     for (const u of [...allies, ...bench]) {
+      // 무대 위 SD (한 장을 코드로 움직인다: 숨쉬기 / 피격 / 얼어붙음 / 쓰러짐)
       const card = el('div', 'bt-unit ally');
       card.dataset.uid = u.uid;
-      card.appendChild(Assets.sd(u.data, 'bt-pic'));
-      const info = el('div', 'bt-info');
-      info.appendChild(el('div', 'bt-name', u.name));
-      u.ui = { card, hp: bar('hp', '체력'), shake: bar('shake', '흔들림'), heart: bar('heart', '마음'), tags: el('div', 'bt-tags') };
-      info.append(u.ui.hp.wrap, u.ui.shake.wrap, u.ui.heart.wrap, u.ui.tags);
-      card.appendChild(info);
+      const anim = el('div', 'bt-anim');        // 숨쉬기, 쓰러짐
+      const body = el('div', 'bt-body');        // 피격 흔들림, 얼어붙은 떨림, 돌진
+      body.appendChild(Assets.sd(u.data, 'bt-pic'));
+      anim.appendChild(body);
+      card.append(el('div', 'bt-ring'), anim);
+      anim.style.animationDelay = `${-Math.random() * 3}s`;
       card.addEventListener('click', () => onUnitTap(u));
 
-      // 대기석용 작은 카드
+      // HUD 상태 칸: 얼굴 + 이름 + 체력/흔들림/마음 + 상태 태그
+      const status = el('div', 'bt-stat');
+      status.style.setProperty('--c', u.color);
+      status.appendChild(Assets.face(u.data, 'bt-face'));
+      const info = el('div', 'bt-stat-info');
+      info.appendChild(el('div', 'bt-name', u.name));
+      u.ui = { card, body, status, hp: bar('hp', '체력'), shake: bar('shake', '흔들림'), heart: bar('heart', '마음'), tags: el('div', 'bt-tags') };
+      info.append(u.ui.hp.wrap, u.ui.shake.wrap, u.ui.heart.wrap);
+      status.append(info, u.ui.tags);
+      status.addEventListener('click', () => onUnitTap(u));
+
+      // 대기석용 작은 칸
       const mini = el('div', 'bt-bench-card');
       mini.dataset.uid = u.uid;
       mini.style.setProperty('--chip', u.color);
+      mini.appendChild(Assets.face(u.data, 'bt-face small'));
       mini.appendChild(el('span', 'bt-bench-name', u.name));
       u.ui.miniHp = bar('hp', '체력');
       mini.appendChild(u.ui.miniHp.wrap);
       mini.addEventListener('click', () => onUnitTap(u));
       u.ui.mini = mini;
     }
+    const enemyCount = enemies.length;
     for (const u of enemies) {
-      const card = el('div', `bt-unit enemy${u.data.boss ? ' boss' : ''}`);
+      const boss = Boolean(u.data.boss);
+      const card = el('div', `bt-unit enemy${boss ? ' boss' : ''}`);
       card.dataset.uid = u.uid;
+      // 위 오른쪽 뒤쪽에 비스듬히 늘어선다 (뒤로 갈수록 조금 작게)
+      if (!boss) {
+        const k = enemyCount === 1 ? 0.5 : u.index / (enemyCount - 1);
+        card.style.left = `${k * 62}%`;
+        card.style.top = `${(1 - k) * 70 + 10}px`;
+        card.style.setProperty('--depth', String(1 - k * 0.12));
+      }
       const info = el('div', 'bt-info');
       info.appendChild(el('div', 'bt-name', u.name));
       u.ui = { card, hp: bar('hp', '체력'), weak: bar('weak', '약점'), tags: el('div', 'bt-tags') };
       info.append(u.ui.hp.wrap, u.ui.weak.wrap, u.ui.tags);
-      card.appendChild(info);
+      const body = el('div', 'bt-body');
       // 같은 적이 여럿이면 images 를 돌아가며 쓴다 (그늘 A·B·C → shade_1·2·3)
       const imgs = u.data.images && u.data.images.length ? u.data.images : [u.id];
-      card.appendChild(Assets.enemy(imgs[u.index % imgs.length], u.name, 'bt-pic'));
+      body.appendChild(Assets.enemy(imgs[u.index % imgs.length], u.name, 'bt-pic'));
+      u.ui.body = body;
+      card.append(info, body);
       card.addEventListener('click', () => onUnitTap(u));
       enemyEl.appendChild(card);
     }
 
     function layoutParty() {
-      partyEl.replaceChildren(...allies.map((u) => u.ui.card));
+      partyEl.replaceChildren(...allies.map((u, i) => {
+        u.ui.card.dataset.slot = String(i);
+        return u.ui.card;
+      }));
+      statusEl.replaceChildren(...allies.map((u) => u.ui.status));
       benchEl.replaceChildren();
       if (hasBench) {
         benchEl.appendChild(el('span', 'bt-bench-label', '대기'));
@@ -243,8 +277,16 @@ Game.registerScreen('battle', {
     }
     layoutParty();
 
-    /** 대상 고르기 표시를 붙일 요소 (대기 부원은 작은 카드) */
-    const cardOf = (u) => (bench.includes(u) ? u.ui.mini : u.ui.card);
+    /** 대상 고르기 표시를 붙일 요소들 (대기 부원은 작은 칸) */
+    const marksOf = (u) => (bench.includes(u) ? [u.ui.mini] : u.side === 'ally' ? [u.ui.card, u.ui.status] : [u.ui.card]);
+
+    /** 한 번만 재생하는 효과 클래스 */
+    function flash(node, cls, ms) {
+      node.classList.remove(cls);
+      void node.offsetWidth; // 다시 시작하게
+      node.classList.add(cls);
+      setTimeout(() => node.classList.remove(cls), ms * BattleTiming.scale + 20);
+    }
 
     function setBar(b, value, max, text) {
       b.fill.style.width = `${Math.max(0, Math.min(1, value / max)) * 100}%`;
@@ -285,6 +327,11 @@ Game.registerScreen('battle', {
         u.ui.card.classList.toggle('frozen', Boolean(u.frozen));
         u.ui.card.classList.toggle('broken', Boolean(u.broken));
         u.ui.card.classList.toggle('active', state.actor === u);
+        if (u.ui.status) {
+          u.ui.status.classList.toggle('active', state.actor === u);
+          u.ui.status.classList.toggle('down', u.down);
+          u.ui.status.classList.toggle('frozen', Boolean(u.frozen));
+        }
       }
       renderTimeline();
     }
@@ -426,6 +473,7 @@ Game.registerScreen('battle', {
       const dmg = Math.max(1, Math.round(actor.atk * (sk.power || 0) * dmgMult * rand(0.95, 1.05)));
       target.hp -= dmg;
       pop(target, `${dmg}`, combo > 1 ? 'combo' : '');
+      flash(target.ui.body, 'hit', 420);
 
       if (!target.broken && sk.break) {
         const br = sk.break * breakMult * (target.mark ? 2 : 1) * combo;
@@ -464,6 +512,7 @@ Game.registerScreen('battle', {
       const dmg = Math.max(1, Math.round(enemy.atk * action.power * mult * rand(0.9, 1.1)));
       t.hp -= dmg;
       pop(t, `${dmg}`, 'hurt');
+      flash(t.ui.body, 'hit', 420);
       addHeart(t, R.HEART_ON_HIT_TAKEN);
       if (action.shake) addShake(t, action.shake);
       if (t.hp <= 0) knockOut(t);
@@ -572,29 +621,65 @@ Game.registerScreen('battle', {
     }
 
     /** 행동 애니메이션: SD 그림을 잠시 동작 시트로 바꿔 한 번 재생한다 */
+    /**
+     * 행동 연출. 시트(아이디_attack/skill/heart.png)가 있으면 프레임 단위로 재생하고,
+     * 없으면 SD 한 장을 앞(오른쪽 위)으로 튀어나가게 움직인다.
+     */
     async function animate(u, kind) {
+      const pic = u.ui.body.querySelector('.bt-pic');
       const sp = Assets.sprite(u.id, kind);
-      if (!sp) return;
-      const pic = u.ui.card.querySelector('.bt-pic');
-      sp.classList.add('bt-sprite');
-      // 프레임 비율 그대로, SD 칸 높이에 맞춘다 (칸보다 넓으면 양옆으로 넘친다)
-      const h = pic.offsetHeight || 330;
-      const w = Math.round(h * sp.meta.frameWidth / sp.meta.frameHeight);
-      sp.style.width = `${w}px`;
-      sp.style.height = `${h}px`;
-      sp.style.marginBottom = `-${h}px`;
-      sp.style.marginLeft = sp.style.marginRight = `${Math.round(((pic.offsetWidth || 250) - w) / 2)}px`;
-      u.ui.card.insertBefore(sp, pic);
-      pic.style.visibility = 'hidden';
-      await sp.play();
-      sp.remove();
-      pic.style.visibility = '';
+      let played = false;
+      if (sp) {
+        sp.classList.add('bt-sprite');
+        // 시트의 캐릭터가 SD 한 장과 비슷한 크기로 보이게, 프레임 높이를 SD 칸보다 조금 크게
+        const h = Math.round((pic.offsetHeight || 440) * 1.15);
+        const w = Math.round(h * sp.meta.frameWidth / sp.meta.frameHeight);
+        sp.style.width = `${w}px`;
+        sp.style.height = `${h}px`;
+        u.ui.body.appendChild(sp);
+        pic.style.visibility = 'hidden';
+        played = await sp.play();
+        sp.remove();
+        pic.style.visibility = '';
+      }
+      if (!played) {
+        flash(u.ui.body, kind === 'heart' ? 'lunge big' : 'lunge', 520);
+        await sleep(520);
+      }
+    }
+
+    /** 마음 스킬: 화면이 그 캐릭터 쪽으로 살짝 확대되고 악몽 속 모습이 컷인으로 지나간다 */
+    async function heartCutIn(u, sk) {
+      const r = u.ui.card.getBoundingClientRect();
+      const st = s.root.getBoundingClientRect();
+      const ox = ((r.left + r.width / 2 - st.left) / st.width) * 100;
+      const oy = ((r.top + r.height / 2 - st.top) / st.height) * 100;
+      s.root.style.setProperty('--zoom-origin', `${ox}% ${oy}%`);
+      s.root.classList.add('zoom');
+      cutin.replaceChildren();
+      const band = el('div', 'bt-cutin-band');
+      band.style.setProperty('--c', u.color);
+      const art = Assets.nightmare(u.data, 'bt-cutin-art');
+      const txt = el('div', 'bt-cutin-text');
+      txt.append(el('span', 'bt-cutin-who', u.name), el('span', 'bt-cutin-skill', sk.name));
+      band.append(art, txt);
+      cutin.appendChild(band);
+      cutin.classList.remove('play');
+      void cutin.offsetWidth;
+      cutin.classList.add('play');
+      await sleep(1250);
+      cutin.classList.remove('play');
+      cutin.replaceChildren();
     }
 
     async function useSkill(actor, baseSkill, target, { releasing = false } = {}) {
       const sk = scaled(actor, baseSkill);
       const kind = { basic: 'attack', skill: 'skill', heart: 'heart' }[baseSkill.slot];
-      if (kind && !(baseSkill.effects || []).some((e) => e.type === 'charge' && !releasing)) await animate(actor, kind);
+      if (kind && !(baseSkill.effects || []).some((e) => e.type === 'charge' && !releasing)) {
+        if (kind === 'heart') await heartCutIn(actor, baseSkill);
+        await animate(actor, kind);
+        s.root.classList.remove('zoom');
+      }
       const effects = sk.effects || [];
       const has = (type) => effects.find((e) => e.type === type);
 
@@ -777,8 +862,9 @@ Game.registerScreen('battle', {
       everyUnit().forEach((u) => {
         u.ui.card.classList.remove('targetable');
         if (u.ui.mini) u.ui.mini.classList.remove('targetable');
+        if (u.ui.status) u.ui.status.classList.remove('targetable');
       });
-      list.forEach((u) => cardOf(u).classList.add('targetable'));
+      list.forEach((u) => marksOf(u).forEach((n) => n.classList.add('targetable')));
     }
 
     function choose(action, sk) {
