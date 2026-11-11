@@ -129,18 +129,83 @@ const Game = (() => {
     screens[id] = def;
   }
 
+  /** 화면의 미리 불러올 목록 지정 (preload.js) */
+  function setPreload(id, fn) {
+    if (screens[id]) screens[id].preload = fn;
+  }
+
+  // ===== 프리로드 + 짧은 로딩 화면 =====
+  let goToken = 0;
+  let loadingEl = null;
+
+  function showLoading() {
+    if (loadingEl) return loadingEl;
+    loadingEl = el('div', 'loading-screen overlay');
+    loadingEl.appendChild(Assets.background('bg_loading'));
+    loadingEl.appendChild(el('div', 'loading-text', '불러오는 중…'));
+    loadingEl.appendChild(el('div', 'loading-count'));
+    stageEl.appendChild(loadingEl);
+    return loadingEl;
+  }
+
+  function hideLoading() {
+    if (!loadingEl) return;
+    const l = loadingEl;
+    loadingEl = null;
+    l.classList.add('out');
+    setTimeout(() => l.remove(), 220);
+  }
+
+  /** 화면에서 쓸 이미지 목록 (화면 정의의 preload). 비동기일 수 있다 */
+  async function preloadList(def, params) {
+    if (typeof def.preload !== 'function') return [];
+    try {
+      return (await def.preload(params)) || [];
+    } catch (e) {
+      console.warn('preload 목록 오류', e);
+      return [];
+    }
+  }
+
+  /**
+   * 화면 전환. 그 화면의 이미지를 먼저 불러온다.
+   * 이미 다 불러온 상태면 바로 바뀌고, 아니면 짧은 로딩 화면을 보여준 뒤 바뀐다.
+   */
   function go(id, params = {}) {
     const def = screens[id];
     if (!def) {
       console.error(`등록되지 않은 화면: ${id}`);
-      return;
+      return undefined;
     }
+    const token = ++goToken;
+    const listOrPromise = typeof def.preload === 'function' ? def.preload(params) : [];
+    // 목록이 바로 나오고 이미 다 불러왔으면 기다리지 않는다
+    if (Array.isArray(listOrPromise) && !Assets.needsLoading(listOrPromise)) {
+      renderScreen(id, def, params);
+      return undefined;
+    }
+    return (async () => {
+      const list = Array.isArray(listOrPromise) ? listOrPromise : await preloadList(def, params);
+      if (token !== goToken) return;
+      if (Assets.needsLoading(list)) {
+        const l = showLoading();
+        const count = l.querySelector('.loading-count');
+        await Assets.preload(list, { onProgress: (n, total) => { count.textContent = `${n} / ${total}`; } });
+      }
+      if (token !== goToken) return;
+      renderScreen(id, def, params);
+      hideLoading();
+    })();
+  }
+
+  function renderScreen(id, def, params) {
     if (disposeCurrent) {
       try { disposeCurrent(); } catch (e) { console.error(e); }
       disposeCurrent = null;
     }
     const screen = buildScreen(id, { background: def.background });
-    stageEl.replaceChildren(screen.root);
+    if (loadingEl) stageEl.replaceChildren(screen.root, loadingEl);
+    else stageEl.replaceChildren(screen.root);
     const dispose = def.render(screen, params);
     if (typeof dispose === 'function') disposeCurrent = dispose;
     currentId = id;
@@ -276,6 +341,14 @@ const Game = (() => {
     stageEl.replaceChildren(box);
   }
 
+  /** 화면 틀·버튼·게이지 같은 UI 그림 (skin.css 가 쓰는 것) */
+  function uiPreloadList() {
+    const ui = ['ui_panel_box', 'ui_panel_clip', 'ui_namebox', 'ui_dialogue_box', 'ui_choice_button',
+      'btn_normal', 'btn_pressed', 'btn_disabled', 'btn_highlight',
+      'icon_settings', 'icon_log', 'icon_auto', 'icon_skip', 'icon_back', 'icon_close'];
+    return ui.map((k) => `assets/ui/${k}.png`);
+  }
+
   async function boot() {
     stageEl = document.getElementById('stage');
     fitStage();
@@ -293,7 +366,8 @@ const Game = (() => {
 
     try {
       await loadData();
-      await minShow;
+      // 게임 시작 때: 모든 화면에서 쓰는 UI 그림과 첫 화면들
+      await Promise.all([minShow, Assets.preload([...uiPreloadList(), ...Assets.URLS.background('bg_notice'), 'assets/ui/logo.png'])]);
     } catch (err) {
       console.error(err);
       showBootError(err);
@@ -304,7 +378,7 @@ const Game = (() => {
 
   return {
     STAGE_W, STAGE_H, SUPPORT_MESSAGE, data,
-    boot, go, registerScreen, buildScreen, iconButton, character, cast, castByName, el, button, confirm: confirmDialog, toast,
+    boot, go, uiPreloadList, registerScreen, setPreload, buildScreen, iconButton, character, cast, castByName, el, button, confirm: confirmDialog, toast,
     stageInfo, chapterLabel, chapterTitle, protagonist, playStage, completeStage, resume,
     get currentScreen() { return currentId; },
   };

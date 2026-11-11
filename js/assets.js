@@ -48,17 +48,60 @@ const Assets = (() => {
 
   // 같은 파일을 여러 번 확인하지 않도록 결과를 기억해 둔다. url → Promise<boolean>
   const probeCache = new Map();
+  const known = new Map();   // url → true(불러옴) / false(없음)
+  const keep = new Map();    // 불러온 이미지를 메모리에 붙잡아 둔다 (다시 그릴 때 바로 나오게)
 
   function probe(url) {
     if (!probeCache.has(url)) {
       probeCache.set(url, new Promise((resolve) => {
         const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
+        const done = (ok) => { known.set(url, ok); if (ok) keep.set(url, img); resolve(ok); };
+        img.onload = () => {
+          // 디코딩까지 끝낸 뒤에 '불러옴'으로 친다 (나타날 때 끊기지 않게)
+          if (img.decode) img.decode().then(() => done(true), () => done(true));
+          else done(true);
+        };
+        img.onerror = () => done(false);
         img.src = url;
       }));
     }
     return probeCache.get(url);
+  }
+
+  /** 후보 목록 중 지금 바로 알 수 있는 결과: 'ok' + url / 'fail' / null(아직 모름) */
+  function settled(candidates) {
+    for (const url of candidates) {
+      const k = known.get(url);
+      if (k === true) return { ok: true, url };
+      if (k === undefined) return null;
+    }
+    return { ok: false };
+  }
+
+  /** 후보를 순서대로 확인해 처음 있는 파일 url (없으면 null) */
+  async function firstOf(candidates) {
+    for (const url of candidates) if (await probe(url)) return url;
+    return null;
+  }
+
+  const asList = (x) => (Array.isArray(x) ? x : [x]);
+
+  /**
+   * 미리 불러오기. items 는 url 또는 후보 url 목록들의 배열.
+   * 아직 모르는 것만 불러오고, 진행 상황을 onProgress(done, total) 로 알려준다.
+   * 너무 오래 걸리면 timeout 뒤에 그냥 넘어간다.
+   */
+  function preload(items, { onProgress, timeout = 10000 } = {}) {
+    const lists = items.filter(Boolean).map(asList).filter((c) => c.length && !settled(c));
+    if (!lists.length) return Promise.resolve();
+    let n = 0;
+    const all = Promise.all(lists.map((c) => firstOf(c).then(() => { n += 1; if (onProgress) onProgress(n, lists.length); })));
+    return Promise.race([all, new Promise((r) => setTimeout(r, timeout))]);
+  }
+
+  /** 아직 불러오지 않은 것이 있는지 */
+  function needsLoading(items) {
+    return items.filter(Boolean).map(asList).some((c) => c.length && !settled(c));
   }
 
   // 배경색 밝기에 맞춰 글자색을 고른다.
@@ -108,19 +151,27 @@ const Assets = (() => {
     ph.appendChild(fileEl);
     el.appendChild(ph);
 
-    (async () => {
-      for (const url of candidates) {
-        if (await probe(url)) {
-          const img = document.createElement('img');
-          img.src = url;
-          img.alt = name;
-          img.draggable = false;
-          el.appendChild(img);
-          el.classList.add('loaded');
-          return;
-        }
-      }
-    })();
+    // 대체 표시는 모든 후보를 불러오지 못했을 때만(.failed). 불러오는 중에는 비워 둔다
+    const show = (url, fade) => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = name;
+      img.draggable = false;
+      if (fade) img.className = 'fade-in';
+      el.appendChild(img);
+      el.classList.add('loaded');
+    };
+    const now = settled(candidates);
+    if (now && now.ok) show(now.url, false);
+    else if (now) el.classList.add('failed');
+    else {
+      el.classList.add('pending');
+      firstOf(candidates).then((url) => {
+        el.classList.remove('pending');
+        if (url) show(url, true);
+        else el.classList.add('failed');
+      });
+    }
 
     return el;
   }
@@ -160,6 +211,23 @@ const Assets = (() => {
       className: 'fit-cover',
     });
   }
+
+  // ===== 프리로드용 후보 목록 (화면 요소와 같은 순서) =====
+  const EXPR_ORDER = (expr) => {
+    const e = EXPRESSIONS.includes(expr) ? expr : 'default';
+    return [e, 'default', ...EXPRESSIONS.filter((x) => x !== e && x !== 'default')];
+  };
+  const URLS = {
+    standing: (id, expr = 'default') => EXPR_ORDER(expr).map((e) => PATHS.character(id, e)),
+    face: (id) => ['default', 'smile', ...EXPRESSIONS.filter((e) => e !== 'default' && e !== 'smile')].map((e) => PATHS.character(id, e)),
+    nightmare: (id) => [PATHS.nightmare(id)],
+    sd: (id) => [`assets/characters/${id}_sd.png`, PATHS.nightmare(id)],
+    sheet: (id, kind) => [`assets/characters/${id}_${kind}.png`],
+    background: (key) => [PATHS.background(key)],
+    cg: (key) => [PATHS.cg(key)],
+    enemy: (key) => [PATHS.enemy(key)],
+    ui: (key) => [PATHS.ui(key)],
+  };
 
   /** 얼굴 아이콘: 기본 스탠딩의 머리 부분을 확대해 보여준다 */
   function face(character, className = 'face') {
@@ -226,15 +294,20 @@ const Assets = (() => {
   function icon(key, className = 'icon') {
     const el = document.createElement('span');
     el.className = `ui-icon ${className}`.trim();
-    probe(PATHS.ui(key)).then((ok) => {
-      if (!ok) return;
+    const url = PATHS.ui(key);
+    const show = (fade) => {
       const img = document.createElement('img');
-      img.src = PATHS.ui(key);
+      img.src = url;
       img.alt = '';
       img.draggable = false;
+      if (fade) img.className = 'fade-in';
       el.appendChild(img);
       el.classList.add('loaded');
-    });
+    };
+    const k = known.get(url);
+    if (k === true) show(false);
+    else if (k === false) el.classList.add('failed');
+    else probe(url).then((ok) => { if (ok) show(true); else el.classList.add('failed'); });
     return el;
   }
 
@@ -250,6 +323,7 @@ const Assets = (() => {
 
   return {
     CHARACTER_IDS, EXPRESSIONS, BACKGROUNDS, PATHS,
+    URLS, preload, needsLoading, probe,
     picture, standing, nightmare, face, sd, sprite, background, enemy, cg, icon,
   };
 })();

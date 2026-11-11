@@ -326,7 +326,14 @@ Game.registerScreen('dialogue', {
       return line.aside ? `${line.speaker} (${line.aside})` : line.speaker;
     }
 
+    /** 다음 몇 줄에서 쓸 그림을 미리 불러 둔다 (기다리지 않음) */
+    function prefetchAhead() {
+      if (!state.script) return;
+      Assets.preload(Preload.dialogueItems(state.script, state.index + 1, 6));
+    }
+
     function showLine(line) {
+      prefetchAhead();
       titleCard.classList.remove('show');
       box.classList.remove('hidden');
       const isNarration = line.text == null;
@@ -364,6 +371,7 @@ Game.registerScreen('dialogue', {
     }
 
     function showTitle(line) {
+      prefetchAhead();
       box.classList.add('hidden');
       titleCard.classList.remove('tutorial');
       titleCard.textContent = String(line.title);
@@ -419,6 +427,10 @@ Game.registerScreen('dialogue', {
     }
 
     function showChoices(options) {
+      // 갈래마다 첫 몇 줄의 그림을 미리
+      for (const opt of options) {
+        if (opt.goto != null) Assets.preload(Preload.dialogueItems(state.script, state.script.labels[opt.goto], 4));
+      }
       setSkip(false);
       clearTimeout(timer);
       state.mode = 'choice';

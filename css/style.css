@@ -157,7 +157,11 @@ img { -webkit-user-drag: none; user-select: none; pointer-events: none; }
   border: 3px dashed rgba(255, 255, 255, 0.35);
   border-radius: 16px;
 }
-.pic.loaded .pic-placeholder { display: none; }
+.pic:not(.failed) .pic-placeholder { display: none; }   /* 대체 표시는 불러오기에 실패했을 때만 */
+.pic > img.fade-in, .ui-icon > img.fade-in { animation: img-fade-in 0.25s ease-out; }
+@keyframes img-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.screen { animation: screen-in 0.2s ease-out; }
+@keyframes screen-in { from { opacity: 0; } }
 .pic-placeholder .ph-name { font-size: 44px; font-weight: 700; line-height: 1.2; }
 .pic-placeholder .ph-sub  { font-size: 26px; opacity: 0.85; }
 .pic-placeholder .ph-file { font-size: 20px; opacity: 0.65; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; }

@@ -179,7 +179,8 @@ html, body, button, input { font-family: var(--font-body); }
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 .icon-btn .icon-btn-img { width: 76px; height: 76px; display: inline-flex; }
-.icon-btn .icon-btn-img:not(.loaded) { display: inline-flex; width: 76px; height: 76px; border-radius: 50%; background: #f5ecdf; }
+.icon-btn .icon-btn-img:not(.loaded) { display: inline-flex; }
+.icon-btn .icon-btn-img.failed { display: inline-flex; width: 76px; height: 76px; border-radius: 50%; background: #f5ecdf; }
 .icon-btn-label { font-size: 20px; }
 .icon-btn:active { transform: scale(0.94); }
 .icon-btn.active .icon-btn-img, .icon-btn[aria-pressed="true"] .icon-btn-img { filter: drop-shadow(0 0 8px #f6b9d4) brightness(1.08); transform: rotate(-8deg); }
@@ -476,3 +477,8 @@ html, body, button, input { font-family: var(--font-body); }
 .fm-card .fm-slot { background: none; border: none; color: #fff; padding: 2px 0; }
 .fm-card .fm-slot .fm-slot-label { display: none; }
 .fm-card .fm-slot-line { color: #f1e8da; }
+
+/* 프리로드 중 로딩 화면 (화면 위에 덮는다) */
+.loading-screen.overlay { z-index: 200; pointer-events: auto; animation: dlg-fade 0.15s ease-out; }
+.loading-screen.overlay.out { opacity: 0; transition: opacity 0.2s ease; }
+.loading-count { position: absolute; right: 84px; bottom: 30px; font-size: 24px; color: rgba(255, 255, 255, 0.85); text-shadow: 0 1px 4px #000; }
