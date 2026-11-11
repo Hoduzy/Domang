@@ -173,7 +173,7 @@ Game.registerScreen('formation', {
       const battleParams = {
         party: picked.slice(),
         enemies: (info && info.enemies) || (info && info.type === 'boss' ? ['shade', 'shade', 'shade'] : ['shade', 'shade']),
-        bg: info && info.bg,
+        battleBg: info && info.battleBg,
         onWin: () => (params.replay ? Game.go('chapter', { chapter }) : Game.completeStage(chapter, stage)),
       };
       Game.go('battle', battleParams);

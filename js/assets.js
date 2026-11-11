@@ -99,6 +99,43 @@ const Assets = (() => {
     return Promise.race([all, new Promise((r) => setTimeout(r, timeout))]);
   }
 
+  /**
+   * 그림 아래쪽 빈 여백과 발 위치를 잰다 (불러온 그림의 알파값으로).
+   * { w, h, footPad: 아래 여백 / 높이, footX: 발 가운데 / 너비 }
+   */
+  const measureCache = new Map();
+  function measure(url) {
+    if (measureCache.has(url)) return measureCache.get(url);
+    const img = keep.get(url);
+    if (!img) return null;
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    let res = { w, h, footPad: 0, footX: 0.5 };
+    try {
+      // 계산은 줄인 크기로 (빠르게)
+      const k = Math.min(1, 400 / Math.max(w, h));
+      const cw = Math.max(1, Math.round(w * k));
+      const ch = Math.max(1, Math.round(h * k));
+      const cv = document.createElement('canvas');
+      cv.width = cw;
+      cv.height = ch;
+      const g = cv.getContext('2d', { willReadFrequently: true });
+      g.drawImage(img, 0, 0, cw, ch);
+      const a = g.getImageData(0, 0, cw, ch).data;
+      const solid = (x, y) => a[(y * cw + x) * 4 + 3] > 60;
+      let bottom = ch - 1;
+      outer: for (; bottom >= 0; bottom--) for (let x = 0; x < cw; x++) if (solid(x, bottom)) break outer;
+      // 발 = 맨 아래에서 높이의 5% 띠 안의 불투명한 부분 가운데
+      const band = Math.max(1, Math.round(ch * 0.05));
+      let sum = 0;
+      let n = 0;
+      for (let y = Math.max(0, bottom - band); y <= bottom; y++) for (let x = 0; x < cw; x++) if (solid(x, y)) { sum += x; n += 1; }
+      res = { w, h, footPad: (ch - 1 - bottom) / ch, footX: n ? sum / n / cw : 0.5 };
+    } catch (e) { /* 캔버스를 못 쓰면 여백 0으로 */ }
+    measureCache.set(url, res);
+    return res;
+  }
+
   /** 아직 불러오지 않은 것이 있는지 */
   function needsLoading(items) {
     return items.filter(Boolean).map(asList).some((c) => c.length && !settled(c));
@@ -266,11 +303,13 @@ const Assets = (() => {
     el.meta = meta;
     el.style.backgroundImage = `url("${url}")`;
     el.style.backgroundSize = `${meta.frames * 100}% 100%`;
-    el.play = () => probe(url).then((ok) => new Promise((resolve) => {
+    el.url = url;
+    el.play = (onFrame) => probe(url).then((ok) => new Promise((resolve) => {
       if (!ok) return resolve(false);
       let i = 0;
       const step = () => {
         el.style.backgroundPosition = `${(i / (meta.frames - 1)) * 100}% 0`;
+        if (onFrame) onFrame(i);
         i += 1;
         if (i < meta.frames) setTimeout(step, frameMs * (typeof BattleTiming !== 'undefined' ? BattleTiming.scale : 1));
         else setTimeout(() => resolve(true), frameMs);
@@ -323,7 +362,7 @@ const Assets = (() => {
 
   return {
     CHARACTER_IDS, EXPRESSIONS, BACKGROUNDS, PATHS,
-    URLS, preload, needsLoading, probe,
+    URLS, preload, needsLoading, probe, firstOf, measure,
     picture, standing, nightmare, face, sd, sprite, background, enemy, cg, icon,
   };
 })();

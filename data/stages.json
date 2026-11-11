@@ -47,7 +47,8 @@
       "stage": 1,
       "type": "story",
       "title": "악몽 진입",
-      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다."
+      "desc": "악몽에 들어가 이번 악몽이 어떤 곳인지 본다.",
+      "battleBg": "battle_ch1_classroom"
     },
     {
       "stage": 2,
@@ -58,13 +59,14 @@
         "ch1_turned",
         "ch1_turned"
       ],
-      "bg": "ch1_classroom"
+      "battleBg": "battle_ch1_classroom"
     },
     {
       "stage": 3,
       "type": "explore",
       "title": "기억 조각",
-      "desc": "선택지로 길을 고르고 기억 조각을 찾는다."
+      "desc": "선택지로 길을 고르고 기억 조각을 찾는다.",
+      "battleBg": "battle_ch1_classroom"
     },
     {
       "stage": 4,
@@ -75,13 +77,14 @@
         "ch1_turned",
         "ch1_eraser"
       ],
-      "bg": "ch1_classroom"
+      "battleBg": "battle_ch1_classroom"
     },
     {
       "stage": 5,
       "type": "story",
       "title": "처음 꺼낸 이야기",
-      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다."
+      "desc": "그 아이가 처음으로 자기 얘기를 꺼낸다.",
+      "battleBg": "battle_ch1_classroom"
     },
     {
       "stage": 6,
@@ -93,7 +96,7 @@
         "ch1_turned",
         "ch1_eraser"
       ],
-      "bg": "ch1_classroom"
+      "battleBg": "battle_ch1_classroom"
     },
     {
       "stage": 7,
@@ -105,13 +108,14 @@
         "ch1_eraser",
         "ch1_turned"
       ],
-      "bg": "ch1_erased"
+      "battleBg": "battle_ch1_erased"
     },
     {
       "stage": 8,
       "type": "story",
       "title": "선생님의 대답",
-      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다."
+      "desc": "선생님의 대답을 고른다. 유대에 영향을 준다.",
+      "battleBg": "battle_ch1_erased"
     },
     {
       "stage": 9,
@@ -123,7 +127,7 @@
         "ch1_eraser",
         "ch1_turned"
       ],
-      "bg": "ch1_erased"
+      "battleBg": "battle_ch1_erased"
     },
     {
       "stage": 10,
@@ -133,7 +137,7 @@
       "enemies": [
         "ch1_crowd"
       ],
-      "bg": "ch1_erased"
+      "battleBg": "battle_ch1_erased"
     }
   ],
   "2": [

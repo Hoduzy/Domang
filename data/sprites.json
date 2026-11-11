@@ -1,92 +1,422 @@
 {
-  "hayun_attack": {
-    "frames": 6,
-    "frameWidth": 536,
-    "frameHeight": 456
-  },
-  "hayun_skill": {
-    "frames": 6,
-    "frameWidth": 453,
-    "frameHeight": 509
-  },
-  "hayun_heart": {
-    "frames": 8,
-    "frameWidth": 419,
-    "frameHeight": 451
-  },
-  "seoyeon_attack": {
-    "frames": 6,
-    "frameWidth": 489,
-    "frameHeight": 453
-  },
-  "seoyeon_skill": {
-    "frames": 6,
-    "frameWidth": 463,
-    "frameHeight": 437
-  },
-  "seoyeon_heart": {
-    "frames": 8,
-    "frameWidth": 450,
-    "frameHeight": 443
-  },
-  "dahyeon_attack": {
-    "frames": 6,
-    "frameWidth": 521,
-    "frameHeight": 529
-  },
-  "dahyeon_skill": {
-    "frames": 6,
-    "frameWidth": 451,
-    "frameHeight": 536
-  },
-  "dahyeon_heart": {
-    "frames": 8,
-    "frameWidth": 455,
-    "frameHeight": 517
-  },
-  "yuna_attack": {
-    "frames": 6,
-    "frameWidth": 426,
-    "frameHeight": 522
-  },
-  "yuna_skill": {
-    "frames": 6,
-    "frameWidth": 427,
-    "frameHeight": 527
-  },
-  "yuna_heart": {
-    "frames": 8,
-    "frameWidth": 475,
-    "frameHeight": 504
-  },
-  "jiyu_attack": {
-    "frames": 6,
-    "frameWidth": 510,
-    "frameHeight": 486
-  },
-  "jiyu_skill": {
-    "frames": 6,
-    "frameWidth": 416,
-    "frameHeight": 560
-  },
-  "jiyu_heart": {
-    "frames": 8,
-    "frameWidth": 488,
-    "frameHeight": 490
-  },
-  "eunchae_attack": {
-    "frames": 6,
-    "frameWidth": 426,
-    "frameHeight": 505
-  },
-  "eunchae_skill": {
-    "frames": 6,
-    "frameWidth": 434,
-    "frameHeight": 521
-  },
-  "eunchae_heart": {
-    "frames": 8,
-    "frameWidth": 562,
-    "frameHeight": 491
-  }
+ "hayun_attack": {
+  "frames": 6,
+  "frameWidth": 536,
+  "frameHeight": 456,
+  "lift": [
+   0.0,
+   0.0,
+   0.0,
+   0.011,
+   0.0,
+   0.0
+  ],
+  "footPad": 0.018,
+  "footX": [
+   0.417,
+   0.367,
+   0.421,
+   0.419,
+   0.421,
+   0.417
+  ]
+ },
+ "hayun_skill": {
+  "frames": 6,
+  "frameWidth": 453,
+  "frameHeight": 509,
+  "lift": [
+   0.0,
+   0.0,
+   0.0,
+   0.004,
+   0.002,
+   0.0
+  ],
+  "footPad": 0.016,
+  "footX": [
+   0.519,
+   0.516,
+   0.509,
+   0.434,
+   0.516,
+   0.52
+  ]
+ },
+ "hayun_heart": {
+  "frames": 8,
+  "frameWidth": 419,
+  "frameHeight": 451,
+  "lift": [
+   0.0,
+   0.0,
+   0.002,
+   0.004,
+   0.008,
+   0.148,
+   0.037,
+   0.0
+  ],
+  "footPad": 0.016,
+  "footX": [
+   0.484,
+   0.486,
+   0.485,
+   0.487,
+   0.486,
+   0.489,
+   0.484,
+   0.487
+  ]
+ },
+ "seoyeon_attack": {
+  "frames": 6,
+  "frameWidth": 489,
+  "frameHeight": 453,
+  "lift": [
+   0.0,
+   0.003,
+   0.007,
+   0.0,
+   0.02,
+   0.0
+  ],
+  "footPad": 0.015,
+  "footX": [
+   0.42,
+   0.42,
+   0.42,
+   0.419,
+   0.421,
+   0.421
+  ]
+ },
+ "seoyeon_skill": {
+  "frames": 6,
+  "frameWidth": 463,
+  "frameHeight": 437,
+  "lift": [
+   0.0,
+   0.002,
+   0.002,
+   0.005,
+   0.002,
+   0.0
+  ],
+  "footPad": 0.016,
+  "footX": [
+   0.451,
+   0.45,
+   0.449,
+   0.45,
+   0.45,
+   0.45
+  ]
+ },
+ "seoyeon_heart": {
+  "frames": 8,
+  "frameWidth": 450,
+  "frameHeight": 443,
+  "lift": [
+   0.0,
+   0.002,
+   0.004,
+   0.002,
+   0.016,
+   0.178,
+   0.07,
+   0.0
+  ],
+  "footPad": 0.016,
+  "footX": [
+   0.413,
+   0.416,
+   0.415,
+   0.414,
+   0.415,
+   0.421,
+   0.416,
+   0.412
+  ]
+ },
+ "dahyeon_attack": {
+  "frames": 6,
+  "frameWidth": 521,
+  "frameHeight": 529,
+  "lift": [
+   0.0,
+   0.008,
+   0.008,
+   0.01,
+   0.01,
+   0.0
+  ],
+  "footPad": 0.013,
+  "footX": [
+   0.389,
+   0.39,
+   0.386,
+   0.391,
+   0.384,
+   0.388
+  ]
+ },
+ "dahyeon_skill": {
+  "frames": 6,
+  "frameWidth": 451,
+  "frameHeight": 536,
+  "lift": [
+   0.0,
+   0.0,
+   0.0,
+   0.002,
+   0.0,
+   0.0
+  ],
+  "footPad": 0.013,
+  "footX": [
+   0.473,
+   0.473,
+   0.475,
+   0.472,
+   0.473,
+   0.473
+  ]
+ },
+ "dahyeon_heart": {
+  "frames": 8,
+  "frameWidth": 455,
+  "frameHeight": 517,
+  "lift": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.216,
+   0.131,
+   0.0
+  ],
+  "footPad": 0.014,
+  "footX": [
+   0.379,
+   0.38,
+   0.382,
+   0.382,
+   0.378,
+   0.386,
+   0.382,
+   0.381
+  ]
+ },
+ "yuna_attack": {
+  "frames": 6,
+  "frameWidth": 426,
+  "frameHeight": 522,
+  "lift": [
+   0.0,
+   0.002,
+   0.0,
+   0.0,
+   0.002,
+   0.0
+  ],
+  "footPad": 0.013,
+  "footX": [
+   0.468,
+   0.466,
+   0.465,
+   0.478,
+   0.467,
+   0.467
+  ]
+ },
+ "yuna_skill": {
+  "frames": 6,
+  "frameWidth": 427,
+  "frameHeight": 527,
+  "lift": [
+   0.0,
+   0.0,
+   0.006,
+   0.012,
+   0.006,
+   0.0
+  ],
+  "footPad": 0.013,
+  "footX": [
+   0.474,
+   0.473,
+   0.476,
+   0.475,
+   0.473,
+   0.477
+  ]
+ },
+ "yuna_heart": {
+  "frames": 8,
+  "frameWidth": 475,
+  "frameHeight": 504,
+  "lift": [
+   0.0,
+   0.004,
+   0.004,
+   0.004,
+   0.004,
+   0.176,
+   0.131,
+   0.0
+  ],
+  "footPad": 0.014,
+  "footX": [
+   0.35,
+   0.352,
+   0.348,
+   0.347,
+   0.352,
+   0.28,
+   0.349,
+   0.349
+  ]
+ },
+ "jiyu_attack": {
+  "frames": 6,
+  "frameWidth": 510,
+  "frameHeight": 486,
+  "lift": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "footPad": 0.014,
+  "footX": [
+   0.276,
+   0.275,
+   0.275,
+   0.272,
+   0.275,
+   0.273
+  ]
+ },
+ "jiyu_skill": {
+  "frames": 6,
+  "frameWidth": 416,
+  "frameHeight": 560,
+  "lift": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "footPad": 0.014,
+  "footX": [
+   0.484,
+   0.486,
+   0.483,
+   0.481,
+   0.485,
+   0.48
+  ]
+ },
+ "jiyu_heart": {
+  "frames": 8,
+  "frameWidth": 488,
+  "frameHeight": 490,
+  "lift": [
+   0.004,
+   0.002,
+   0.0,
+   0.0,
+   0.0,
+   0.208,
+   0.153,
+   0.004
+  ],
+  "footPad": 0.014,
+  "footX": [
+   0.444,
+   0.434,
+   0.415,
+   0.4,
+   0.449,
+   0.148,
+   0.425,
+   0.443
+  ]
+ },
+ "eunchae_attack": {
+  "frames": 6,
+  "frameWidth": 426,
+  "frameHeight": 505,
+  "lift": [
+   0.0,
+   0.002,
+   0.01,
+   0.012,
+   0.01,
+   0.002
+  ],
+  "footPad": 0.014,
+  "footX": [
+   0.498,
+   0.496,
+   0.496,
+   0.494,
+   0.494,
+   0.496
+  ]
+ },
+ "eunchae_skill": {
+  "frames": 6,
+  "frameWidth": 434,
+  "frameHeight": 521,
+  "lift": [
+   0.0,
+   0.0,
+   0.002,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "footPad": 0.013,
+  "footX": [
+   0.483,
+   0.483,
+   0.484,
+   0.489,
+   0.488,
+   0.484
+  ]
+ },
+ "eunchae_heart": {
+  "frames": 8,
+  "frameWidth": 562,
+  "frameHeight": 491,
+  "lift": [
+   0.0,
+   0.002,
+   0.002,
+   0.0,
+   0.015,
+   0.202,
+   0.125,
+   0.002
+  ],
+  "footPad": 0.016,
+  "footX": [
+   0.454,
+   0.453,
+   0.455,
+   0.454,
+   0.454,
+   0.167,
+   0.445,
+   0.456
+  ]
+ }
 }

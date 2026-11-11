@@ -158,7 +158,8 @@ Game.registerScreen('battle', {
     // ===== 화면 =====
     s.root.classList.add('battle');
     // 스테이지마다 다른 악몽 배경 (없으면 기본 악몽 복도)
-    if (params.bg) s.bg.replaceChildren(Assets.background(params.bg));
+    // 전투 전용 배경 (없으면 끝없는 복도)
+    s.bg.replaceChildren(Assets.background(params.battleBg || 'battle_hallway'));
     const timeline = el('div', 'bt-timeline');
     // 무대: 배경 위에 안개 → 적(위 오른쪽, 멀리) → 아군(아래 왼쪽, 가까이). 마음 스킬 때 통째로 확대된다
     const world = el('div', 'bt-world');
@@ -203,15 +204,67 @@ Game.registerScreen('battle', {
       return { wrap, fill, value };
     }
 
+    // ===== 바닥 배치 =====
+    // 아군: 화면 아래 왼쪽. 앞(0번)일수록 크고 아래, 뒤일수록 작고 위. x·y 는 발끝 위치(무대 px), h 는 키
+    const ALLY_FLOOR = [
+      { x: 330, y: 805, h: 470 },
+      { x: 640, y: 735, h: 405 },
+      { x: 905, y: 672, h: 348 },
+    ];
+    // 적: 화면 위 오른쪽, 안개 낀 먼 바닥. 뒤(오른쪽)로 갈수록 작고 위
+    function enemyFloor(i, n, boss) {
+      if (boss) return { x: 1450, y: 650, h: 430 };
+      const k = n === 1 ? 0.5 : i / (n - 1);
+      return { x: 1180 + k * 520, y: 640 - k * 70, h: 230 - k * 40 };
+    }
+
+    /**
+     * 발끝이 (0,0)에 오도록 그림을 놓는다. 그림 아래쪽 빈 여백과 발의 가로 위치는 그림에서 잰다.
+     * tint: 배경 조명에 맞춘 아주 약한 푸른 보라 색조를 그림 모양대로 덧씌운다.
+     */
+    function figure(candidates, h, { tint = false, fallback } = {}) {
+      const fig = el('div', 'bt-figure');
+      Assets.firstOf(candidates).then((url) => {
+        if (!url) {
+          if (fallback) fig.appendChild(fallback());
+          fig.classList.add('failed');
+          return;
+        }
+        const m = Assets.measure(url) || { w: 3, h: 4, footPad: 0, footX: 0.5 };
+        const w = h * m.w / m.h;
+        fig.style.width = `${w}px`;
+        fig.style.height = `${h}px`;
+        fig.style.left = `${-m.footX * w}px`;
+        fig.style.bottom = `${-m.footPad * h}px`;
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.draggable = false;
+        fig.appendChild(img);
+        if (tint) {
+          const t = el('i', 'bt-tint');
+          t.style.webkitMaskImage = t.style.maskImage = `url("${url}")`;
+          fig.appendChild(t);
+        }
+      });
+      return fig;
+    }
+
+    function shadowEl(h) {
+      const sh = el('div', 'bt-shadow');
+      sh.style.width = `${Math.round(h * 0.5)}px`;
+      sh.style.height = `${Math.round(h * 0.085)}px`;
+      return sh;
+    }
+
     for (const u of [...allies, ...bench]) {
-      // 무대 위 SD (한 장을 코드로 움직인다: 숨쉬기 / 피격 / 얼어붙음 / 쓰러짐)
+      // 무대 위 SD (한 장을 코드로 움직인다: 숨쉬기 / 피격 / 얼어붙음 / 쓰러짐). 카드의 (0,0)이 발끝
       const card = el('div', 'bt-unit ally');
       card.dataset.uid = u.uid;
       const anim = el('div', 'bt-anim');        // 숨쉬기, 쓰러짐
       const body = el('div', 'bt-body');        // 피격 흔들림, 얼어붙은 떨림, 돌진
-      body.appendChild(Assets.sd(u.data, 'bt-pic'));
       anim.appendChild(body);
-      card.append(el('div', 'bt-ring'), anim);
+      card.appendChild(anim);
       anim.style.animationDelay = `${-Math.random() * 3}s`;
       card.addEventListener('click', () => onUnitTap(u));
 
@@ -224,7 +277,7 @@ Game.registerScreen('battle', {
       status.appendChild(portrait);
       const info = el('div', 'bt-stat-info');
       info.appendChild(el('div', 'bt-name', u.name));
-      u.ui = { card, body, status, hp: bar('hp', '체력'), shake: bar('shake', '흔들림'), heart: bar('heart', '마음'), tags: el('div', 'bt-tags') };
+      u.ui = { card, body, anim, status, hp: bar('hp', '체력'), shake: bar('shake', '흔들림'), heart: bar('heart', '마음'), tags: el('div', 'bt-tags') };
       info.append(u.ui.hp.wrap, u.ui.shake.wrap, u.ui.heart.wrap);
       status.append(info, u.ui.tags);
       status.addEventListener('click', () => onUnitTap(u));
@@ -245,13 +298,12 @@ Game.registerScreen('battle', {
       const boss = Boolean(u.data.boss);
       const card = el('div', `bt-unit enemy${boss ? ' boss' : ''}`);
       card.dataset.uid = u.uid;
-      // 위 오른쪽 뒤쪽에 비스듬히 늘어선다 (뒤로 갈수록 조금 작게)
-      if (!boss) {
-        const k = enemyCount === 1 ? 0.5 : u.index / (enemyCount - 1);
-        card.style.left = `${k * 62}%`;
-        card.style.top = `${(1 - k) * 70 + 10}px`;
-        card.style.setProperty('--depth', String(1 - k * 0.12));
-      }
+      // 위 오른쪽 안개 낀 바닥에 작게 선다 (발끝 기준)
+      const fl = enemyFloor(u.index, enemyCount, boss);
+      card.style.left = `${fl.x}px`;
+      card.style.top = `${fl.y}px`;
+      card.style.setProperty('--h', `${fl.h}px`);
+      card.style.zIndex = String(Math.round(fl.y));
       const info = el('div', 'bt-info');
       info.appendChild(el('div', 'bt-name', u.name));
       u.ui = { card, hp: bar('hp', '체력'), weak: bar('weak', '약점'), tags: el('div', 'bt-tags') };
@@ -259,17 +311,31 @@ Game.registerScreen('battle', {
       const body = el('div', 'bt-body');
       // 같은 적이 여럿이면 images 를 돌아가며 쓴다 (그늘 A·B·C → shade_1·2·3)
       const imgs = u.data.images && u.data.images.length ? u.data.images : [u.id];
-      body.appendChild(Assets.enemy(imgs[u.index % imgs.length], u.name, 'bt-pic'));
+      const key = imgs[u.index % imgs.length];
+      body.appendChild(figure(Assets.URLS.enemy(key), fl.h, { fallback: () => Assets.enemy(key, u.name, 'bt-pic') }));
       u.ui.body = body;
-      card.append(info, body);
+      card.append(shadowEl(fl.h), body, info);
       card.addEventListener('click', () => onUnitTap(u));
       enemyEl.appendChild(card);
     }
 
     function layoutParty() {
       partyEl.replaceChildren(...allies.map((u, i) => {
-        u.ui.card.dataset.slot = String(i);
-        return u.ui.card;
+        const fl = ALLY_FLOOR[i] || ALLY_FLOOR[ALLY_FLOOR.length - 1];
+        const card = u.ui.card;
+        card.style.left = `${fl.x}px`;
+        card.style.top = `${fl.y}px`;
+        card.style.zIndex = String(10 - i);
+        card.style.setProperty('--h', `${fl.h}px`);
+        if (u.ui.h !== fl.h) {
+          // 자리(크기)가 바뀌면 그림과 그림자를 그 크기로 다시 만든다
+          u.ui.h = fl.h;
+          if (u.ui.shadow) u.ui.shadow.remove();
+          u.ui.shadow = shadowEl(fl.h);
+          card.insertBefore(u.ui.shadow, u.ui.anim);
+          u.ui.body.replaceChildren(figure(Assets.URLS.sd(u.id), fl.h, { tint: true, fallback: () => Assets.sd(u.data, 'bt-pic') }));
+        }
+        return card;
       }));
       statusEl.replaceChildren(...allies.map((u) => u.ui.status));
       benchEl.replaceChildren();
@@ -638,31 +704,52 @@ Game.registerScreen('battle', {
      * 없으면 SD 한 장을 앞(오른쪽 위)으로 튀어나가게 움직인다.
      */
     async function animate(u, kind) {
-      const pic = u.ui.body.querySelector('.bt-pic');
+      const fig = u.ui.body.querySelector('.bt-figure');
       const sp = Assets.sprite(u.id, kind);
+      const shadow = u.ui.shadow;
       let played = false;
-      if (sp) {
+      if (sp && fig && !fig.classList.contains('failed')) {
+        const meta = sp.meta;
         sp.classList.add('bt-sprite');
-        // 시트의 캐릭터가 SD 한 장과 비슷한 크기로 보이게, 프레임 높이를 SD 칸보다 조금 크게
-        const h = Math.round((pic.offsetHeight || 440) * 1.15);
-        const w = Math.round(h * sp.meta.frameWidth / sp.meta.frameHeight);
+        // 시트 속 캐릭터는 SD 한 장보다 작게 그려져 있어서 조금 크게. 발끝(바닥선)을 (0,0)에 맞춘다
+        const h = Math.round((u.ui.h || 440) * 1.15);
+        const w = Math.round(h * meta.frameWidth / meta.frameHeight);
+        const fx = meta.footX ? meta.footX[0] : 0.5;
         sp.style.width = `${w}px`;
         sp.style.height = `${h}px`;
+        sp.style.left = `${-fx * w}px`;
+        sp.style.bottom = `${-(meta.footPad || 0) * h}px`;
+        const t = el('i', 'bt-tint');
+        t.style.webkitMaskImage = t.style.maskImage = `url("${sp.url}")`;
+        t.style.webkitMaskSize = t.style.maskSize = `${meta.frames * 100}% 100%`;
+        sp.appendChild(t);
         u.ui.body.appendChild(sp);
-        pic.style.visibility = 'hidden';
-        played = await sp.play();
+        fig.style.visibility = 'hidden';
+        played = await sp.play((i) => {
+          const pos = `${(i / (meta.frames - 1)) * 100}% 0`;
+          t.style.webkitMaskPosition = t.style.maskPosition = pos;
+          // 점프하면 그림자는 바닥에 남아 작아지고 옅어진다
+          const lift = meta.lift ? meta.lift[i] || 0 : 0;
+          if (shadow) {
+            shadow.style.transform = `translate(-50%, -50%) scale(${Math.max(0.45, 1 - lift * 3)})`;
+            shadow.style.opacity = String(Math.max(0.35, 1 - lift * 3));
+          }
+        });
         sp.remove();
-        pic.style.visibility = '';
+        fig.style.visibility = '';
+        if (shadow) { shadow.style.transform = ''; shadow.style.opacity = ''; }
       }
       if (!played) {
-        flash(u.ui.body, kind === 'heart' ? 'lunge big' : 'lunge', 520);
+        const cls = kind === 'heart' ? 'lunge big' : 'lunge';
+        flash(u.ui.body, cls, 520);
+        if (shadow) flash(shadow, cls, 520);
         await sleep(520);
       }
     }
 
     /** 마음 스킬: 화면이 그 캐릭터 쪽으로 살짝 확대되고 악몽 속 모습이 컷인으로 지나간다 */
     async function heartCutIn(u, sk) {
-      const r = u.ui.card.getBoundingClientRect();
+      const r = (u.ui.body.querySelector('.bt-figure') || u.ui.card).getBoundingClientRect();
       const st = s.root.getBoundingClientRect();
       const ox = ((r.left + r.width / 2 - st.left) / st.width) * 100;
       const oy = ((r.top + r.height / 2 - st.top) / st.height) * 100;

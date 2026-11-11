@@ -482,3 +482,78 @@ html, body, button, input { font-family: var(--font-body); }
 .loading-screen.overlay { z-index: 200; pointer-events: auto; animation: dlg-fade 0.15s ease-out; }
 .loading-screen.overlay.out { opacity: 0; transition: opacity 0.2s ease; }
 .loading-count { position: absolute; right: 84px; bottom: 30px; font-size: 24px; color: rgba(255, 255, 255, 0.85); text-shadow: 0 1px 4px #000; }
+
+/* ===== 전투: 바닥 위 배치, 발밑 그림자, 배경 조명 색조 ===== */
+.bt-party { position: absolute; inset: 0; width: auto; height: auto; pointer-events: none; }
+.bt-enemies { position: absolute; inset: 0; width: auto; height: auto; right: auto; top: 0; pointer-events: none; }
+.bt-party > .bt-unit, .bt-enemies > .bt-unit { pointer-events: none; }
+.bt-unit .bt-figure, .bt-unit .bt-info { pointer-events: auto; }
+
+/* 카드의 (0,0) = 발끝. 그림은 그 위로 선다 */
+.bt-unit.ally, .bt-unit.enemy, .bt-unit.enemy.boss {
+  position: absolute;
+  width: 0;
+  height: 0;
+  display: block;
+  transform: none;
+  filter: none;
+}
+.bt-unit .bt-anim, .bt-unit .bt-body { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; }
+.bt-figure { position: absolute; transform-origin: 50% 100%; }
+.bt-figure > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bt-figure.failed { left: -125px; bottom: 0; width: 250px; height: 330px; }
+.bt-figure.failed .pic { width: 250px; height: 330px; }
+.bt-sprite { position: absolute; transform: none; background-repeat: no-repeat; pointer-events: none; }
+
+/* 배경 조명과 어울리는 아주 약한 푸른 보라 색조 (그림 모양대로) */
+.bt-tint {
+  position: absolute;
+  inset: 0;
+  background: rgba(96, 92, 190, 0.16);
+  mix-blend-mode: multiply;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* 발밑 반투명 타원 그림자: 바닥에 남고 크기만 변한다 */
+.bt-shadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0) 72%);
+  transition: transform 0.08s linear, opacity 0.08s linear;
+  pointer-events: none;
+}
+.bt-sprite ~ .bt-shadow { transition: none; }
+.bt-unit.ally.active .bt-shadow { background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, rgba(127, 220, 190, 0.45) 50%, rgba(0, 0, 0, 0) 74%); }
+.bt-unit.ally.targetable .bt-shadow, .bt-unit.enemy.targetable .bt-shadow {
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.45) 0%, rgba(255, 210, 110, 0.6) 50%, rgba(0, 0, 0, 0) 74%);
+  animation: bt-ring 1s ease-in-out infinite;
+}
+.bt-shadow.lunge { animation: bt-shadow-lunge 0.52s cubic-bezier(.3,.6,.3,1); }
+.bt-shadow.lunge.big { animation-name: bt-shadow-lunge-big; }
+@keyframes bt-shadow-lunge { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 35%, 55% { transform: translate(-50%, -50%) translateX(90px) scale(0.75); opacity: 0.7; } }
+@keyframes bt-shadow-lunge-big { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 60% { transform: translate(-50%, -50%) translateX(150px) scale(0.55); opacity: 0.55; } }
+.bt-unit.ally.down .bt-shadow { opacity: 0.4; }
+.bt-unit.enemy.down .bt-shadow { opacity: 0; }
+
+/* 숨쉬기·쓰러짐·흔들림은 발끝 기준 */
+.bt-unit.ally .bt-anim { animation: bt-breathe 3s ease-in-out infinite; }
+.bt-unit.ally.down .bt-anim { animation: none; transform: rotate(-14deg) translate(-30px, 16px); opacity: 0.32; filter: grayscale(1) blur(1px); }
+.bt-unit.ally.frozen .bt-figure > img { filter: saturate(0.35) brightness(0.92) sepia(0.4) hue-rotate(170deg) drop-shadow(0 0 16px rgba(140, 200, 255, 0.7)); }
+.bt-unit.ally.frozen .bt-tint { background: rgba(110, 170, 255, 0.28); }
+.bt-unit.enemy .bt-figure > img { filter: saturate(0.85) brightness(0.92); }
+.bt-unit.enemy.targetable .bt-body { animation: none; filter: drop-shadow(0 0 12px rgba(255, 220, 140, 0.9)); cursor: pointer; }
+.bt-unit.ally.targetable .bt-figure { cursor: pointer; filter: drop-shadow(0 0 10px rgba(255, 220, 140, 0.8)); }
+
+/* 적 정보: 머리 위 */
+.bt-unit.enemy .bt-info { position: absolute; left: 0; bottom: calc(var(--h) + 10px); transform: translateX(-50%); width: 220px; }
+.bt-unit.enemy.boss .bt-info { width: 320px; }
+/* 팝업·대사는 머리 높이 근처 */
+.bt-unit .bt-pop { top: calc(var(--h) * -0.7 + var(--pop-offset, 0px)); }
+.bt-unit .bt-say { top: calc(var(--h) * -1 - 30px); }

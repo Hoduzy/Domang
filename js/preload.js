@@ -54,7 +54,7 @@ const Preload = (() => {
   // ----- 전투 -----
   function battleItems(params) {
     const party = [...(params.party || []), ...(params.reserve || [])];
-    const items = [U.background(params.bg || 'nightmare_hallway')];
+    const items = [U.background(params.battleBg || 'battle_hallway')];
     for (const id of party) {
       items.push(U.sd(id), U.nightmare(id), U.face(id),
         U.sheet(id, 'attack'), U.sheet(id, 'skill'), U.sheet(id, 'heart'),
