@@ -196,10 +196,13 @@ Game.registerScreen('battle', {
     const actorEl = el('div', 'bt-actor');
     const descEl = el('div', 'bt-desc');
     const actionsEl = el('div', 'bt-actions');
-    const logEl = el('div', 'bt-log');
+    const swapSlot = el('div', 'bt-swap-slot');
+    const clearActions = () => { actionsEl.replaceChildren(); swapSlot.replaceChildren(); };
+    // 전투 알림: 대상이 없는 알림은 화면 가운데에 큰 글씨로 잠깐 (아래 전투 기록 줄 대신)
+    const banner = el('div', 'bt-banner');
     const head = el('div', 'bt-panel-head');
     head.append(actorEl, descEl);
-    panel.append(head, actionsEl, logEl);
+    panel.append(head, actionsEl);
     // 왼쪽: 부원 상태 카드 (앞쪽 아군의 발 아래). 오른쪽: 대기 부원 + 설명창
     const leftCol = el('div', 'bt-hud-left');
     leftCol.append(statusEl);
@@ -207,24 +210,49 @@ Game.registerScreen('battle', {
     rightCol.append(benchEl, panel);
     hud.append(leftCol, rightCol);
     const cutin = el('div', 'bt-cutin');
-    s.root.append(world, timeline, hud, cutin);
+    s.root.append(world, timeline, hud, banner, cutin);
 
-    const retreatBtn = Game.iconButton('icon_back', '후퇴', async () => {
-      if (state.phase === 'ended') return;
-      if (await Game.confirm('전투를 그만두고 나갈까요?', { ok: '후퇴' })) exit();
-    });
-    retreatBtn.classList.add('bt-retreat');
-    s.root.appendChild(retreatBtn);
+    // 오른쪽 위 메뉴: 안에 후퇴 (누르면 확인 창)
+    const menuBtn = Game.iconButton('icon_menu', '메뉴', () => openMenu());
+    menuBtn.classList.add('bt-menu-btn');
+    s.root.appendChild(menuBtn);
+    function openMenu() {
+      if (state.phase === 'ended' || s.root.querySelector('.bt-menu')) return;
+      const overlay = el('div', 'bt-menu');
+      const box = el('div', 'bt-menu-box');
+      const close = () => overlay.remove();
+      box.appendChild(Game.button('후퇴', async () => {
+        close();
+        if (state.phase === 'ended') return;
+        if (await Game.confirm('전투를 그만두고 나갈까요?', { ok: '후퇴' })) exit();
+      }));
+      box.appendChild(Game.button('닫기', close, { primary: true }));
+      overlay.appendChild(box);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+      s.root.appendChild(overlay);
+    }
 
-    function bar(cls, label) {
+    // 게이지 왼쪽 작은 아이콘 (체력 하트, 흔들림 물결, 마음 별)
+    const BAR_ICONS = {
+      hp: '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.2 0 3.6 1.2 5.3 3.1 1.7-1.9 3.1-3.1 5.3-3.1 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" fill="#ef7a96" stroke="#3b3550" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+      shake: '<svg viewBox="0 0 24 24"><path d="M2 9c2.5-3 5-3 7.5 0s5 3 7.5 0 4-2.5 5 -1M2 16c2.5-3 5-3 7.5 0s5 3 7.5 0 4-2.5 5-1" fill="none" stroke="#5f7fd6" stroke-width="2.6" stroke-linecap="round"/></svg>',
+      heart: '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.8 6.1 6.7.7-5 4.5 1.4 6.6L12 17l-5.9 3.4 1.4-6.6-5-4.5 6.7-.7z" fill="#f4c34a" stroke="#3b3550" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+    };
+
+    function bar(cls, { icon = true } = {}) {
       const wrap = el('div', `bt-bar ${cls}`);
+      if (icon && BAR_ICONS[cls]) {
+        const ic = el('span', 'bt-bar-icon');
+        ic.innerHTML = BAR_ICONS[cls];
+        wrap.appendChild(ic);
+      }
       const track = el('div', 'bt-bar-track');
       const fill = el('i');
-      track.append(fill, el('span', 'bt-bar-label', label));
+      track.append(fill);
       wrap.appendChild(track);
       const value = el('span', 'bt-bar-value');
       wrap.appendChild(value);
-      return { wrap, fill, value };
+      return { wrap, fill, value, track };
     }
 
     // ===== 바닥 배치 =====
@@ -236,9 +264,9 @@ Game.registerScreen('battle', {
     const spot = ({ x, y, s: k }) => ({ x: (x / 100) * SW, y: (y / 100) * SH, h: Math.round(k * BASE_H * SH) });
     // 아군: 왼쪽 위 → 오른쪽 아래 대각선. 아래(앞)로 올수록 크다
     const ALLY_FLOOR = [
-      { x: 16, y: 56, s: 0.85 },
-      { x: 26, y: 66, s: 0.95 },
-      { x: 37, y: 77, s: 1.05 },
+      { x: 13.5, y: 56, s: 0.85 },  // 서로 덜 겹치게 간격을 조금 벌렸다 (대각선은 그대로)
+      { x: 26, y: 67, s: 0.95 },
+      { x: 38.5, y: 78, s: 1.05 },
     ].map(spot);
     // 적: 아군 대각선과 나란한 선을 오른쪽 위로 옮긴 자리. 선 위의 위치 t(0~1)로 정한다
     const ENEMY_LINE = { from: { x: 60, y: 40, s: 0.6 }, to: { x: 84, y: 50, s: 0.75 } };
@@ -317,12 +345,12 @@ Game.registerScreen('battle', {
       const status = el('div', 'bt-stat');
       status.style.setProperty('--c', u.color);
       // 얼굴: ui_portrait_frame 폴라로이드 틀 안에
-      const portrait = el('div', 'bt-portrait');
-      portrait.append(Assets.face(u.data, 'bt-face'), el('span', 'bt-portrait-frame'));
-      status.appendChild(portrait);
+      // 윗줄: 작은 얼굴 + 이름, 아래: 게이지 세 줄 (카드 폭을 게이지에 다 쓴다)
       const info = el('div', 'bt-stat-info');
-      info.appendChild(el('div', 'bt-name', u.name));
-      u.ui = { card, body, anim, status, hp: bar('hp', '체력'), shake: bar('shake', '흔들림'), heart: bar('heart', '마음'), tags: el('div', 'bt-tags') };
+      const nameRow = el('div', 'bt-stat-head');
+      nameRow.append(Assets.face(u.data, 'bt-face'), el('div', 'bt-name', u.name));
+      info.appendChild(nameRow);
+      u.ui = { card, body, anim, status, hp: bar('hp'), shake: bar('shake'), heart: bar('heart'), tags: el('div', 'bt-tags') };
       info.append(u.ui.hp.wrap, u.ui.shake.wrap, u.ui.heart.wrap);
       status.append(info, u.ui.tags);
       status.addEventListener('click', () => onUnitTap(u));
@@ -350,14 +378,18 @@ Game.registerScreen('battle', {
       card.style.top = `${fl.y}px`;
       card.style.setProperty('--h', `${fl.h}px`);
       card.style.zIndex = zFor(fl);
+      // 머리 위에 떠 있는 게이지 두 줄 (체력, 약점). 숫자만 작게
       const info = el('div', 'bt-info');
-      info.appendChild(el('div', 'bt-name', u.name));
-      u.ui = { card, hp: bar('hp', '체력'), weak: bar('weak', '약점'), tags: el('div', 'bt-tags') };
-      info.append(u.ui.hp.wrap, u.ui.weak.wrap, u.ui.tags);
+      info.setAttribute('aria-label', u.name);
+      u.ui = { card, hp: bar('hp', { icon: false }), weak: bar('weak', { icon: false }) };
+      // 약점이 터지면 약점 게이지에 금이 간다
+      u.ui.weak.track.appendChild(el('span', 'bt-crack'));
+      info.append(u.ui.hp.wrap, u.ui.weak.wrap);
       const body = el('div', 'bt-body');
       // 같은 적이 여럿이면 images 를 돌아가며 쓴다 (그늘 A·B·C → shade_1·2·3)
       const imgs = u.data.images && u.data.images.length ? u.data.images : [u.id];
       const key = imgs[u.index % imgs.length];
+      u.ui_key = key;
       body.appendChild(figure(Assets.URLS.enemy(key), fl.h, {
         fallback: () => Assets.enemy(key, u.name, 'bt-pic'),
         // 정보 상자는 머리 바로 위
@@ -377,7 +409,7 @@ Game.registerScreen('battle', {
      */
     function placeEnemyInfo() {
       const ready = enemies.filter((e) => e.ui.headTop != null);
-      const INFO_SCALE = 0.7;
+      const INFO_SCALE = 1;
       const boxes = ready.map((e) => {
         const w = e.ui.info.offsetWidth * INFO_SCALE;
         const h = e.ui.info.offsetHeight * INFO_SCALE;
@@ -426,7 +458,8 @@ Game.registerScreen('battle', {
       statusEl.replaceChildren(...allies.map((u) => u.ui.status));
       benchEl.replaceChildren();
       if (hasBench) {
-        benchEl.appendChild(el('span', 'bt-bench-label', '대기'));
+        // 교대 도장은 대기 부원 줄 맨 앞 (행동 창 카드 줄을 넓게 쓰도록)
+        benchEl.appendChild(swapSlot);
         bench.forEach((u) => benchEl.appendChild(u.ui.mini));
       }
     }
@@ -458,8 +491,6 @@ Game.registerScreen('battle', {
         if (u.charging) t.push(['준비 중', 'charge']);
         if (u.cover) t.push(['우산', 'cover']);
         if (u.promise) t.push([`${Game.data.promises.types[u.promise.type].name.replace('의 약속', '')}·${Game.data.promises.grades[u.promise.grade]}${u.endureLeft ? ' ✦' : ''}`, `promise ${u.promise.grade}`]);
-        const cd = u.cooldowns[u.skillIds.skill];
-        if (cd) t.push([`스킬 ${cd}턴`, 'cd']);
       } else {
         if (u.broken) t.push(['약점 터짐', 'broken']);
         if (u.mark) t.push([`표시 ${u.mark}`, 'mark']);
@@ -488,8 +519,9 @@ Game.registerScreen('battle', {
           u.ui.mini.classList.toggle('down', u.down);
         } else {
           setBar(u.ui.weak, u.weak, u.weakMax);
+          u.ui.card.classList.toggle('marked', Boolean(u.mark));
         }
-        u.ui.tags.replaceChildren(...tags(u).map(([text, cls]) => Assets.labeled(tagImage(cls), text, `bt-tag ${cls}`)));
+        if (u.ui.tags) u.ui.tags.replaceChildren(...tags(u).map(([text, cls]) => Assets.labeled(tagImage(cls), text, `bt-tag ${cls}`)));
         u.ui.card.classList.toggle('down', u.down);
         u.ui.card.classList.toggle('frozen', Boolean(u.frozen));
         u.ui.card.classList.toggle('broken', Boolean(u.broken));
@@ -536,10 +568,39 @@ Game.registerScreen('battle', {
         if (u.side === 'ally') {
           chip.style.setProperty('--chip', u.color);
           chip.appendChild(Assets.face(u.data, 'bt-chip-face'));
+          chip.appendChild(el('span', 'bt-chip-name', u.name));
+        } else {
+          chip.appendChild(enemyFace(u));
+          chip.setAttribute('aria-label', u.name);
         }
-        chip.appendChild(el('span', 'bt-chip-name', u.name));
         timeline.appendChild(chip);
       });
+    }
+
+    /** 적 그림의 머리 부분을 잘라 만든 작은 얼굴 아이콘 (차례표용) */
+    function enemyFace(u) {
+      const box = el('span', 'bt-chip-enemy');
+      const fig = u.ui.body && u.ui.body.querySelector('.bt-figure');
+      const url = fig && fig.dataset.url;
+      const m = url && Assets.measure(url);
+      if (!m) {
+        box.textContent = u.name.slice(-1);
+        return box;
+      }
+      // 보이는 몸 높이의 위쪽 1/3 정도가 칸을 채우게 확대하고, 몸의 가로 가운데·머리 끝에 맞춘다 (칸은 정사각형, 단위 %)
+      const visible = Math.max(0.2, 1 - (m.footPad || 0) - (m.headPad || 0));
+      const hPct = (100 * 2.5) / visible;
+      const wPct = hPct * (m.w / m.h);
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.draggable = false;
+      img.style.height = `${hPct}%`;
+      img.style.width = `${wPct}%`;
+      img.style.left = `${50 - m.footX * wPct}%`;
+      img.style.top = `${4 - (m.headPad || 0) * hPct}%`;
+      box.appendChild(img);
+      return box;
     }
 
     function nextActor() {
@@ -553,10 +614,32 @@ Game.registerScreen('battle', {
     }
 
     // ===== 연출 =====
-    function log(text, cls = '') {
-      const line = el('div', `bt-log-line ${cls}`, text);
-      logEl.appendChild(line);
-      while (logEl.children.length > 3) logEl.firstChild.remove();
+    /**
+     * 전투 알림. 대상(target)이 있으면 그 위에, 없으면 화면 가운데에 큰 글씨로 1초 정도 보였다 사라진다.
+     * 새 알림이 오면 앞의 가운데 알림은 바로 바뀐다.
+     */
+    // 가운데 알림은 줄을 세운다: 한 번에 하나, 뒤에 기다리는 알림이 있으면 조금 빨리 넘긴다 (최대 3개 대기)
+    let bannerTimer = null;
+    const bannerQueue = [];
+    function showBanner() {
+      const next = bannerQueue.shift();
+      if (!next) { banner.classList.remove('show', 'in'); bannerTimer = null; return; }
+      banner.className = `bt-banner show ${next.cls}`;
+      banner.textContent = next.text;
+      void banner.offsetWidth;
+      banner.classList.add('in');
+      const ms = (bannerQueue.length ? 650 : 1100) * BattleTiming.scale + 60;
+      banner.style.animationDuration = `${ms}ms`;
+      bannerTimer = setTimeout(showBanner, ms);
+    }
+    function log(text, cls = '', target = null) {
+      if (target && target.ui && target.ui.card) {
+        pop(target, text, `note ${cls}`);
+        return;
+      }
+      bannerQueue.push({ text, cls });
+      while (bannerQueue.length > 3) bannerQueue.shift();
+      if (!bannerTimer) showBanner();
     }
 
     function pop(u, text, cls = '') {
@@ -565,7 +648,7 @@ Game.registerScreen('battle', {
       const p = el('div', `bt-pop${isNum ? ' num' : ''} ${cls}`, isNum ? null : text);
       if (isNum) p.appendChild(Assets.digits(text, 'bt-pop-digits'));
       const stack = u.ui.card.querySelectorAll('.bt-pop').length;
-      p.style.setProperty('--pop-offset', `${stack * 48}px`);
+      p.style.setProperty('--pop-offset', `${stack * 64}px`);
       u.ui.card.appendChild(p);
       setTimeout(() => p.remove(), 1100);
     }
@@ -608,8 +691,7 @@ Game.registerScreen('battle', {
         u.frozen = ev.turns || 2;
         u.charging = null;
         if (ev.log) log(ev.log, 'frozen');
-        log(`${josa(u.name, '이', '가')} 얼어붙었다. (${u.frozen}턴)`, 'frozen');
-        pop(u, '얼어붙음', 'shake');
+        log(`얼어붙음 ${u.frozen}턴`, 'frozen', u);
         sayShakeLine(u);
       }
     }
@@ -663,8 +745,8 @@ Game.registerScreen('battle', {
             addHeart(actor, actor.pfx.breakHeart);
             log(`웃음의 약속 — ${actor.name}의 마음 게이지가 +${actor.pfx.breakHeart} 더 찼다.`, 'break');
           }
-          pop(target, '약점 터짐!', 'break');
-          log(`${target.name}의 약점이 터졌다! ${actor.name}의 마음 게이지가 크게 찼다.`, 'break');
+          // "약점 터짐" 글자 대신 약점 게이지에 금이 간다
+          flash(target.ui.weak.track, 'cracking', 700);
           queueTrigger('break');
         }
       }
@@ -673,7 +755,7 @@ Game.registerScreen('battle', {
         target.down = true;
         target.broken = false;
         target.mark = 0;
-        log(`${josa(target.name, '이', '가')} 흩어졌다.`);
+        log('흩어졌다', 'down', target);
         if (state.lastAllyAttack && state.lastAllyAttack.target === target) state.lastAllyAttack = null;
       }
     }
@@ -718,7 +800,7 @@ Game.registerScreen('battle', {
       if (u.shake >= u.shakeMax) {
         u.frozen = Math.random() < 0.5 ? 1 : 2;
         u.charging = null;
-        log(`${josa(u.name, '이', '가')} 얼어붙었다. (${u.frozen}턴)`, 'frozen');
+        log(`얼어붙음 ${u.frozen}턴`, 'frozen', u);
       }
       if (u.shake >= u.shakeMax * Game.data.growth.shakeLines.threshold) sayShakeLine(u);
     }
@@ -728,7 +810,6 @@ Game.registerScreen('battle', {
       if (u.saidShakeLine || u.down) return;
       u.saidShakeLine = true;
       const line = Growth.shakeLine(u.id, u.dep.stage);
-      log(`${u.name}: "${line}"`, u.dep.stage >= 4 ? 'calm' : 'frozen');
       const bubble = el('div', `bt-say stage${u.dep.stage}`, line);
       u.ui.card.appendChild(bubble);
       setTimeout(() => bubble.remove(), 2600);
@@ -751,7 +832,7 @@ Game.registerScreen('battle', {
       u.stealth = false;
       u.cover = false;
       u.charging = null;
-      log(`${josa(u.name, '이', '가')} 의식을 잃었다.`, 'down');
+      log('의식을 잃었다', 'down', u);
       for (const other of livingAllies()) addShake(other, R.SHAKE_ON_ALLY_DOWN);
     }
 
@@ -906,7 +987,7 @@ Game.registerScreen('battle', {
           log(`${josa(actor.name, '이', '가')} 그림자에서 나타났다. 약점 피해 ${strike.breakMult}배!`);
         }
         if (combo) {
-          log(`협공! ${josa(combo.partner.name, '과', '와')} ${actor.name} (유대 ${combo.bond}) — ×${combo.mult.toFixed(2)}`, 'combo');
+          log(`협공! ${combo.partner.name} × ${actor.name}`, 'combo');
           pop(target, '협공!', 'combo');
           state.comboPairs.add(Save.bondKey(actor.id, combo.partner.id));
           queueTrigger('combo');
@@ -1003,31 +1084,76 @@ Game.registerScreen('battle', {
     let pending = null; // { action, skill, targets, step } 대상 고르는 중
     let resolveCommand = null;
 
+    // 행동 창 위쪽 한 줄: 고른 카드의 설명
     function showDesc(sk, extra = '') {
       descEl.replaceChildren();
       if (!sk) return;
-      descEl.appendChild(el('div', 'bt-desc-name', sk.name));
-      descEl.appendChild(el('div', 'bt-desc-text', sk.desc + (extra ? ` ${extra}` : '')));
+      descEl.appendChild(el('span', 'bt-desc-name', sk.name));
+      descEl.appendChild(el('span', 'bt-desc-text', sk.desc + (extra ? ` ${extra}` : '')));
     }
 
-    function actionButton(label, sub, onClick, { disabled = false, cls = '', icon = null } = {}) {
-      const b = Game.button('', onClick, { disabled });
+    /**
+     * 스킬 카드 / 명령 도장. 한 번 누르면 고른 표시와 설명, 한 번 더 누르면 사용.
+     * locked: 쓸 수 없는 상태(쿨타임, 마음 부족 등) — 누르면 설명만 보인다. center: 카드 가운데 큰 글자(남은 턴)
+     * badge: 도장 오른쪽 위 숫자 배지 (남은 횟수)
+     */
+    function actionButton(label, onClick, { locked = false, cls = '', icon = null, center = null, badge = null } = {}) {
+      const b = Game.button('', onClick);
       b.classList.add('bt-action');
-      if (cls) b.classList.add(cls);
+      if (cls) cls.split(' ').filter(Boolean).forEach((c) => b.classList.add(c));
       // 모양: 스킬 카드(ui_skill_card) / 마음 스킬 카드(ui_heart_card) / 선생님·공통 명령(ui_command_button)
       if (icon && icon.startsWith('skill_')) b.classList.add(icon.endsWith('_heart') ? 'heart-card' : 'skill-card');
       else if ((icon && icon.startsWith('cmd_')) || cls.includes('cmd')) b.classList.add('cmd');
+      if (locked) b.classList.add('locked');
       if (icon) b.appendChild(Assets.icon(icon, 'bt-action-icon'));
       b.appendChild(el('span', 'bt-action-name', label));
-      if (sub) b.appendChild(el('span', 'bt-action-sub', sub));
+      if (center != null) b.appendChild(el('span', 'bt-action-center', String(center)));
+      if (badge != null) b.appendChild(el('span', 'bt-action-badge', String(badge)));
       return b;
+    }
+
+    let selectedCard = null; // { action, sk, btn, locked }
+
+    function selectCard(entry) {
+      if (state.phase !== 'command' && state.phase !== 'target') return;
+      // 같은 카드를 한 번 더: 사용
+      if (selectedCard && selectedCard.btn === entry.btn) {
+        if (entry.locked) { flash(entry.btn, 'nope', 380); return; }
+        useSelected();
+        return;
+      }
+      // 다른 카드: 앞의 선택을 풀고 이 카드를 고른다
+      if (state.phase === 'target') {
+        pending = null;
+        state.phase = 'command';
+        markTargets([]);
+      }
+      hud.querySelectorAll('.bt-action.selected').forEach((n) => n.classList.remove('selected'));
+      entry.btn.classList.add('selected');
+      selectedCard = entry;
+      if (entry.locked) { showDesc(entry.sk, entry.why || ''); return; }
+      choose(entry.action, entry.sk);
+    }
+
+    function useSelected() {
+      if (!pending) return;
+      const sk = pending.skill;
+      if (pending.action !== 'swap' && (!pickOne(sk) || pending.targets.length === 1)) {
+        confirmTarget(pending.targets[0]);
+        return;
+      }
+      showDesc(sk, pending.action === 'swap' ? '물러날 부원을 누르세요.' : '대상을 직접 누르세요.');
+      descEl.classList.remove('hint');
+      void descEl.offsetWidth;
+      descEl.classList.add('hint');
     }
 
     function renderCommands() {
       const a = state.actor;
-      actionsEl.replaceChildren();
-      actorEl.replaceChildren(el('span', 'bt-actor-name', a.name), el('span', 'bt-actor-sub', `${a.data.role} · 차례`));
-      descEl.replaceChildren(el('div', 'bt-desc-text dim', '행동을 고르세요.'));
+      clearActions();
+      selectedCard = null;
+      actorEl.replaceChildren(el('span', 'bt-actor-name', a.name));
+      descEl.replaceChildren();
 
       const basic = skill(a.skillIds.basic);
       const sk = skill(a.skillIds.skill);
@@ -1037,27 +1163,29 @@ Game.registerScreen('battle', {
       const staySk = skill('stay');
       const swapSk = skill('swap');
 
-      const add = (b, s2) => {
-        if (s2) {
-          b.addEventListener('pointerenter', () => { if (state.phase === 'command') showDesc(s2); });
-          b.addEventListener('focus', () => { if (state.phase === 'command') showDesc(s2); });
-        }
-        actionsEl.appendChild(b);
+      const add = (action, s2, btn, locked, why, parent = actionsEl) => {
+        const entry = { action, sk: s2, btn, locked, why };
+        btn.addEventListener('click', () => selectCard(entry));
+        parent.appendChild(btn);
       };
       const ic = (slot) => `skill_${a.id}_${slot}`;
-      add(actionButton(basic.name, '', () => choose('skill', basic), { icon: ic('basic') }), basic);
-      add(actionButton(sk.name, cd ? `${cd}턴 남음` : '스킬', () => choose('skill', sk),
-        { disabled: cd > 0 || !targetsFor(a, sk).length, icon: ic('skill') }), sk);
-      add(actionButton(heart.name, a.heart >= R.HEART_MAX ? '마음 스킬' : `마음 ${a.heart}/100`, () => choose('skill', heart),
-        { disabled: a.heart < R.HEART_MAX || !targetsFor(a, heart).length, cls: a.heart >= R.HEART_MAX ? 'ready' : '', icon: ic('heart') }), heart);
-      add(actionButton(grabSk.name, '차례 사용', () => choose('grab', grabSk),
-        { disabled: !targetsFor(a, grabSk).length, icon: 'cmd_hold' }), grabSk);
+      const noTarget = (s2) => !targetsFor(a, s2).length;
+      add('skill', basic, actionButton(basic.name, null, { icon: ic('basic'), locked: noTarget(basic) }), noTarget(basic));
+      // 쿨타임: 어둡게, 가운데 남은 턴 숫자만 크게
+      const skLocked = cd > 0 || noTarget(sk);
+      add('skill', sk, actionButton(sk.name, null, { icon: ic('skill'), locked: skLocked, cls: cd > 0 ? 'cooldown' : '', center: cd > 0 ? cd : null }),
+        skLocked, cd > 0 ? `(${cd}턴 뒤에 쓸 수 있어요)` : '');
+      const ready = a.heart >= R.HEART_MAX;
+      const hLocked = !ready || noTarget(heart);
+      add('skill', heart, actionButton(heart.name, null, { icon: ic('heart'), locked: hLocked, cls: ready ? 'ready' : 'charging', center: ready ? null : `${a.heart}%` }),
+        hLocked, ready ? '' : `(마음 게이지 ${a.heart}/100)`);
+      add('grab', grabSk, actionButton(grabSk.name, null, { icon: 'cmd_hold', locked: noTarget(grabSk) }), noTarget(grabSk));
       if (hasBench) {
-        add(actionButton(swapSk.name, `대기 ${livingBench().length}명`, () => choose('swap', swapSk),
-          { disabled: !targetsFor(a, swapSk).length, cls: 'cmd' }), swapSk);
+        add('swap', swapSk, actionButton(swapSk.name, null, { cls: 'cmd swap', locked: noTarget(swapSk), badge: livingBench().length }), noTarget(swapSk), '', swapSlot);
       }
-      add(actionButton(staySk.name, `선생님 ${state.stayUses}/${staySk.uses}`, () => choose('stay', staySk),
-        { disabled: state.stayUses <= 0 || !targetsFor(a, staySk).length, cls: 'teacher', icon: 'cmd_stay' }), staySk);
+      const stayLocked = state.stayUses <= 0 || noTarget(staySk);
+      add('stay', staySk, actionButton(staySk.name, null, { cls: 'teacher', icon: 'cmd_stay', locked: stayLocked, badge: state.stayUses }),
+        stayLocked, state.stayUses <= 0 ? '(이번 전투에서는 다 썼어요)' : '');
     }
 
     function markTargets(list) {
@@ -1076,11 +1204,8 @@ Game.registerScreen('battle', {
       pending = { action, skill: sk, targets: list, step: 1 };
       state.phase = 'target';
       markTargets(list);
-      const hint = action === 'swap' ? '물러날 부원을 누르세요.' : pickOne(sk) ? '대상을 누르세요.' : '표시된 대상에게 사용돼요.';
+      const hint = action === 'swap' ? '물러날 부원을 누르세요.' : pickOne(sk) && list.length > 1 ? '대상을 누르세요.' : '한 번 더 누르면 사용해요.';
       showDesc(sk, hint);
-      actionsEl.replaceChildren();
-      if (!pickOne(sk)) actionsEl.appendChild(actionButton('사용', '', () => confirmTarget(list[0])));
-      actionsEl.appendChild(actionButton('취소', '', cancelTarget, { cls: 'cancel' }));
     }
 
     function cancelTarget() {
@@ -1120,7 +1245,8 @@ Game.registerScreen('battle', {
         return;
       }
       state.phase = 'busy';
-      actionsEl.replaceChildren();
+      clearActions();
+      descEl.replaceChildren();
       resolveCommand({ action, skill: sk, target, out });
     }
 
@@ -1188,9 +1314,9 @@ Game.registerScreen('battle', {
 
     async function enemyTurn(e) {
       state.enemyTurns += 1;
-      actorEl.replaceChildren(el('span', 'bt-actor-name enemy', e.name), el('span', 'bt-actor-sub', '적의 차례'));
+      actorEl.replaceChildren(el('span', 'bt-actor-name enemy', e.name));
       descEl.replaceChildren();
-      actionsEl.replaceChildren();
+      clearActions();
       await runTutorials('enemyTurn');
       if (!alive || !livingAllies().length) return;
       if (e.broken) {
@@ -1247,7 +1373,7 @@ Game.registerScreen('battle', {
       state.result = result;
       state.actor = null;
       updateUI();
-      actionsEl.replaceChildren();
+      clearActions();
       actorEl.replaceChildren(el('span', 'bt-actor-name', result === 'win' ? '승리' : '패배'));
       descEl.replaceChildren();
       const overlay = el('div', `bt-result ${result}`);

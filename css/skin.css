@@ -795,3 +795,170 @@ input[type=range]::-moz-range-thumb {
 .dlg-note-line.write.done { animation: none; clip-path: none; }
 .dlg-note-line.added { color: #b03a55; }
 @keyframes dlg-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* =====================================================================
+ * 전투 HUD 크게 (누르기 쉽고 잘 읽히게): 버튼·카드 1.5배 이상, 가장 작은 글자도 1.5배 이상
+ * ===================================================================== */
+
+/* --- 적 머리 위: 체력·약점 게이지 두 줄, 숫자만 --- */
+.bt-unit.enemy .bt-info, .bt-unit.enemy.boss .bt-info {
+  width: 240px; padding: 0; gap: 6px; transform: translateX(-50%);
+  background: none !important; border: none; border-image: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+.bt-unit.enemy.boss .bt-info { width: 340px; }
+.bt-unit.enemy .bt-bar { display: block; position: relative; }
+.bt-unit.enemy .bt-bar-track { height: 30px; }
+.bt-unit.enemy .bt-bar-value {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%); z-index: 2;
+  font-size: 21px; font-weight: 700; color: #fff; text-shadow: 0 0 3px #2b2540, 0 0 3px #2b2540, 0 1px 2px #2b2540;
+}
+.bt-unit.enemy .bt-bar.weak .bt-bar-track { height: 24px; }
+.bt-unit.enemy .bt-bar.weak .bt-bar-value { font-size: 19px; }
+.bt-unit.enemy.marked .bt-bar.weak .bt-bar-track { filter: drop-shadow(0 0 6px rgba(255, 205, 90, 0.95)); }
+/* 약점이 터지면: 약점 게이지에 금 */
+.bt-crack {
+  position: absolute; inset: -6px -4px; z-index: 1; pointer-events: none; opacity: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%232b2540' stroke-width='1.6' stroke-linejoin='bevel'%3E%3Cpath d='M30 0 L34 6 L29 10 L35 14 L31 20'/%3E%3Cpath d='M34 6 L44 4 L50 9'/%3E%3Cpath d='M35 14 L46 15 L52 12 L60 16'/%3E%3Cpath d='M64 0 L61 7 L67 11 L63 20'/%3E%3Cpath d='M67 11 L76 8 L84 12'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='0.6' opacity='0.8'%3E%3Cpath d='M31 1 L35 6 L30 10 L36 14'/%3E%3Cpath d='M65 1 L62 7 L68 11'/%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.bt-unit.enemy.broken .bt-crack { opacity: 1; }
+.bt-unit.enemy.broken .bt-bar.weak .bt-bar-track { filter: saturate(0.4) brightness(0.9); }
+.bt-bar-track.cracking { animation: bt-crack-shake 0.7s ease-out; }
+.bt-bar-track.cracking .bt-crack { opacity: 1; animation: bt-crack-in 0.35s ease-out; }
+@keyframes bt-crack-shake { 0%, 100% { transform: none; } 10% { transform: translateX(-6px) rotate(-2deg); } 25% { transform: translateX(6px) rotate(2deg); } 40% { transform: translateX(-4px); } 60% { transform: translateX(3px); } }
+@keyframes bt-crack-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+/* 고를 수 있는 적: 발밑 그림자가 빛난다 */
+.bt-unit.enemy.targetable .bt-shadow {
+  background: radial-gradient(ellipse at center, rgba(255, 245, 200, 0.95) 0%, rgba(255, 210, 110, 0.75) 40%, rgba(255, 190, 90, 0) 72%);
+  box-shadow: 0 0 30px 8px rgba(255, 210, 110, 0.55);
+  animation: bt-target-glow 1s ease-in-out infinite;
+}
+@keyframes bt-target-glow { 50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.08); } }
+.bt-unit.enemy.targetable .bt-body { filter: none; }
+
+/* --- 행동 순서: 칸 1.3배, 적은 얼굴 아이콘 --- */
+.bt-timeline { width: 988px; height: 247px; top: 0; left: 22px; }
+.bt-chip { gap: 2px; }
+.bt-chip .pic.face { width: 58px; height: 58px; }
+.bt-chip-name { font-size: 33px; }
+.bt-chip-enemy {
+  position: relative; display: block; width: 84px; height: 84px; overflow: hidden; border-radius: 50%;
+  background: #e9dfe8; border: 3px solid #8a2f3e; box-sizing: border-box; color: #8a2f3e;
+  font-family: var(--font-hand); font-size: 40px; line-height: 78px; text-align: center;
+}
+.bt-chip-enemy img { position: absolute; max-width: none; filter: saturate(0.85) brightness(0.95); }
+
+/* --- 아래 아군 카드: 아이콘 + 굵은 게이지 + 큰 숫자, 카드 전체를 누른다 --- */
+.bt-hud { grid-template-columns: 1fr 1040px; }
+.bt-status { gap: 10px; }
+.bt-stat {
+  position: relative; grid-template-columns: 92px 1fr; grid-template-rows: auto; align-items: center;
+  column-gap: 8px; padding: 2px 6px 4px; cursor: pointer;
+}
+.bt-portrait { width: 92px; height: 88px; grid-row: auto; }
+.bt-stat .bt-name { font-size: 36px; line-height: 1; margin-bottom: 2px; }
+.bt-stat-info { gap: 5px; }
+.bt-stat .bt-bar { grid-template-columns: 30px 1fr 64px; gap: 6px; }
+.bt-bar-icon { display: block; width: 30px; height: 30px; }
+.bt-bar-icon svg { width: 100%; height: 100%; display: block; }
+.bt-stat .bt-bar-track { height: 30px; }
+.bt-stat .bt-bar-value { font-size: 30px; font-weight: 700; line-height: 1; }
+/* 상태 꼬리표는 카드 위 모서리에 걸쳐 띄운다 (카드 높이를 늘리지 않게) */
+.bt-stat .bt-tags { position: absolute; right: -4px; top: -30px; grid-column: auto; z-index: 2; justify-content: flex-end; pointer-events: none; }
+.bt-tag.img-label { height: 42px; font-size: 24px; border-image-width: 0 11px 0 36px; border-width: 0 11px 0 36px; }
+.bt-stat.targetable { filter: drop-shadow(0 0 14px rgba(255, 210, 110, 0.95)); }
+
+/* 대기 부원 칸 */
+.bt-bench { gap: 10px; }
+.bt-bench-label { font-size: 30px; color: #fff; text-shadow: 0 1px 4px #000; }
+.bt-bench-card { width: 300px; min-height: 96px; grid-template-columns: 66px 1fr; column-gap: 10px; padding: 2px 6px; }
+.bt-bench-card .pic.face.small { width: 66px; height: 66px; }
+.bt-bench-name { font-size: 30px; }
+.bt-mini-hp.gauge { --gh: 28px; }
+
+/* --- 행동 창 --- */
+.bt-panel { gap: 10px; }
+.bt-panel-head { align-items: center; gap: 20px; min-height: 64px; }
+.bt-actor-name { font-size: 64px; line-height: 1; }
+.bt-actor-sub { display: none; }
+.bt-panel-head .bt-desc { display: block; flex: 1; min-width: 0; font-size: 28px; line-height: 1.3; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.bt-panel-head .bt-desc-name { font-size: 30px; margin-right: 12px; color: var(--ink-accent); }
+.bt-panel-head .bt-desc-text { font-size: 28px; line-height: 1.3; }
+.bt-desc.hint { animation: bt-hint 0.5s ease-out; }
+@keyframes bt-hint { 30% { color: #b4434f; transform: translateX(6px); } }
+
+.bt-actions { gap: 10px; min-height: 245px; align-items: center; flex-wrap: nowrap; }
+/* 스킬 카드 1.6배 */
+.btn.bt-action.skill-card, .btn.bt-action.heart-card { flex: 0 0 166px; height: 245px; transition: transform 0.12s ease, filter 0.12s ease; }
+.btn.bt-action.skill-card .bt-action-name, .btn.bt-action.heart-card .bt-action-name { font-size: 27px; line-height: 1.12; top: 59%; }
+.btn.bt-action .bt-action-sub { display: none; }
+/* 고른 카드 */
+.btn.bt-action.selected { transform: translateY(-14px); filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 16px rgba(255, 210, 110, 0.95)); }
+.btn.bt-action.selected:active { transform: translateY(-11px) scale(0.98); }
+/* 쓸 수 없는 카드: 어둡게 (누르면 설명만) */
+.btn.bt-action.locked { filter: grayscale(0.7) brightness(0.62); }
+.btn.bt-action.locked.selected { filter: grayscale(0.7) brightness(0.62) drop-shadow(0 0 10px #fff); }
+.bt-action-center {
+  position: absolute; left: 0; right: 0; top: 18%; z-index: 2; text-align: center;
+  font-family: var(--font-hand); font-size: 110px; line-height: 1; color: #fff;
+  -webkit-text-stroke: 4px #2b2540; paint-order: stroke; pointer-events: none;
+}
+.btn.bt-action.charging .bt-action-center { top: 24%; font-size: 56px; }
+.btn.bt-action.nope { animation: bt-nope 0.38s ease-out; }
+@keyframes bt-nope { 25% { translate: -8px 0; } 50% { translate: 8px 0; } 75% { translate: -4px 0; } }
+/* 명령 도장 1.5배, 남은 횟수는 오른쪽 위 숫자 배지 */
+.btn.bt-action.cmd { position: relative; flex: 0 1 192px; width: 192px; height: 192px; min-width: 150px; aspect-ratio: 1; height: auto; padding: 24px 18px; }
+.btn.bt-action.cmd .bt-action-icon { width: 72px; height: 72px; }
+.btn.bt-action.cmd .bt-action-name { font-size: 29px; }
+.bt-action-badge {
+  position: absolute; right: 2px; top: 2px; z-index: 2; min-width: 52px; height: 52px; padding: 0 8px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; border-radius: 26px;
+  font-size: 30px; font-weight: 800; color: #fff; background: #b4434f; border: 3px solid #fff7ef; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.btn.bt-action.cmd.locked .bt-action-badge { background: #6b6478; }
+
+/* --- 알림: 대상 위 / 화면 가운데 큰 글씨 (전투 기록 줄 대신) --- */
+.bt-log { display: none; }
+.bt-pop.note { font-size: 40px; font-weight: 800; color: #fff; text-shadow: 0 0 4px #2b2540, 0 0 4px #2b2540, 0 2px 8px #000; animation-duration: 1.1s; }
+.bt-pop.note.frozen { color: #bcd0ff; }
+.bt-pop.note.down { color: #ffb3bd; }
+.bt-banner {
+  position: absolute; left: 50%; top: 31%; z-index: 15; transform: translate(-50%, -50%);
+  max-width: 1300px; padding: 14px 54px; display: none; text-align: center; pointer-events: none;
+  font-size: 50px; font-weight: 800; line-height: 1.25; color: #fff; word-break: keep-all;
+  text-shadow: 0 0 6px #2b2540, 0 0 6px #2b2540, 0 3px 10px #000;
+  background: linear-gradient(90deg, transparent, rgba(30, 24, 52, 0.55) 15%, rgba(30, 24, 52, 0.55) 85%, transparent);
+}
+.bt-banner.show { display: block; }
+.bt-banner.in { animation: bt-banner 1.1s ease-out forwards; }
+.bt-banner.combo, .bt-banner.break { color: #ffe08a; }
+.bt-banner.frozen { color: #bcd0ff; }
+.bt-banner.calm { color: #c8f2e0; }
+@keyframes bt-banner { 0% { opacity: 0; transform: translate(-50%, -40%); } 12% { opacity: 1; transform: translate(-50%, -50%); } 80% { opacity: 1; } 100% { opacity: 0; } }
+
+/* --- 메뉴 (후퇴는 메뉴 안에) --- */
+.bt-menu-btn.icon-btn { position: absolute; z-index: 9; top: 14px; right: 26px; }
+.bt-menu-btn .icon-btn-img, .bt-menu-btn .icon-btn-img.failed { width: 114px; height: 114px; }
+.bt-menu-btn .icon-btn-label { font-size: 30px; }
+.bt-menu { position: absolute; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.45); display: flex; align-items: flex-start; justify-content: flex-end; padding: 160px 40px 0 0; }
+.bt-menu-box { display: flex; flex-direction: column; gap: 18px; padding: 26px; animation: dlg-fade 0.15s ease-out;
+  border-style: solid; border-image: url("../assets/ui/ui_panel_box.png") 120 110 110 200 fill / 24px 22px 22px 40px round; border-width: 24px 22px 22px 40px; }
+.bt-menu-box .btn { min-width: 320px; min-height: 120px; font-size: 42px; }
+
+/* 전투 속 튜토리얼·결과 버튼도 크게 */
+.screen--battle .bt-tutorial-box .btn, .screen--battle .bt-result-buttons .btn { min-height: 120px; min-width: 300px; font-size: 40px; }
+.screen--battle .bt-tutorial-box p { font-size: 34px; }
+/* 아군 카드: 얼굴+이름 한 줄, 게이지 세 줄이 카드 폭을 다 쓴다 */
+.bt-stat { display: block; padding: 0 6px 2px; }
+.bt-stat-head { display: flex; align-items: center; gap: 8px; height: 50px; }
+.bt-stat-head .pic.face { width: 48px; height: 48px; flex: 0 0 auto; border: 2px solid var(--c); }
+.bt-stat-head .pic.face > img { left: -100%; top: -6%; width: 300%; }
+.bt-stat .bt-name { margin: 0; }
+.bt-stat .bt-bar { display: grid; grid-template-columns: 30px minmax(0, 1fr) 70px; align-items: center; }
+.bt-stat .bt-bar-track { min-width: 0; }
+.bt-unit.enemy .bt-info { width: 200px; }
+/* 교대 도장: 대기 부원 줄 맨 앞 */
+.bt-hud-right .bt-bench { align-items: flex-end; }
+.bt-swap-slot { flex: 0 0 auto; display: flex; }
+.bt-swap-slot:empty { width: 192px; height: 96px; }
+.bt-swap-slot .btn.bt-action.cmd { flex: 0 0 192px; width: 192px; }
