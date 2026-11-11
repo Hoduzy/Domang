@@ -696,3 +696,36 @@ input[type=range]::-moz-range-thumb {
 .rs-track.gauge, .cn-stamina-gauge { flex: 1 1 auto; }
 .gauge > i { width: auto !important; height: auto !important; background: none !important; border-radius: 0 !important; }
 .cs-bar.gauge { --gh: 40px; }
+
+/* ===== 전투 배치 (비율 기준): 적 정보 상자, 먼 안개, 바닥에 남는 그림자, 화면 안에 들어오는 HUD ===== */
+/* 적 정보 상자: 70% 크기로 머리 바로 위 (bottom 은 battle.js 가 머리 높이로 정한다) */
+.bt-unit.enemy .bt-info, .bt-unit.enemy.boss .bt-info {
+  bottom: calc(var(--h) + 10px);
+  width: 220px;
+  transform: translateX(-50%) scale(0.7);
+  transform-origin: 50% 100%;
+  transition: bottom 0.15s ease;
+}
+.bt-unit.enemy.boss .bt-info { width: 300px; }
+
+/* 적 뒤 먼 안개: 적이 선 선을 따라 옅게 한 겹 */
+.bt-fog-far { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.bt-fog-far i {
+  position: absolute; border-radius: 50%; filter: blur(30px);
+  background: radial-gradient(ellipse at center, rgba(226, 218, 255, 0.42), rgba(200, 190, 240, 0.18) 45%, rgba(200, 190, 240, 0) 70%);
+  animation: bt-fog-drift 40s ease-in-out infinite alternate;
+}
+.bt-fog-far .f1 { left: 46%; top: 14%; width: 56%; height: 34%; }
+.bt-fog-far .f2 { left: 58%; top: 26%; width: 48%; height: 30%; animation-duration: 52s; animation-delay: -20s; opacity: 0.8; }
+@keyframes bt-fog-drift { from { transform: translateX(-30px); } to { transform: translateX(40px); } }
+
+/* 튀어나가는 동작 중에도 그림자는 발끝 자리에 남아 작아지기만 한다 */
+@keyframes bt-shadow-lunge { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 35%, 55% { transform: translate(-50%, -50%) scale(0.72); opacity: 0.7; } }
+@keyframes bt-shadow-lunge-big { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 30% { transform: translate(-50%, -50%) scale(1.05); } 60% { transform: translate(-50%, -50%) scale(0.55); opacity: 0.55; } }
+/* HUD: 두 칸 모두 내용 높이만큼, 화면 아래에 붙인다 (화면 밖으로 잘리지 않게) */
+.bt-hud { top: auto; bottom: 10px; left: 16px; right: 16px; height: auto; grid-template-columns: 1fr 960px; align-items: end; gap: 16px; }
+.bt-hud-left, .bt-hud-right { display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; min-width: 0; }
+.bt-hud-right .bt-bench { justify-content: flex-end; }
+.bt-hud-right .bt-panel { min-height: 0; }
+/* 차례표: 적 머리 위 정보 상자와 겹치지 않게 왼쪽 위로 */
+.bt-timeline { left: 30px; transform: none; }

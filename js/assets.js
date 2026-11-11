@@ -104,16 +104,36 @@ const Assets = (() => {
    * { w, h, footPad: 아래 여백 / 높이, footX: 발 가운데 / 너비 }
    */
   const measureCache = new Map();
+  const alphaMaps = new Map();
+  /** 그림 안의 비율 좌표(0~1)가 보이는 픽셀인지. 모르면 true */
+  function opaqueAt(url, fx, fy) {
+    measure(url);
+    const m = alphaMaps.get(url);
+    if (!m) return true;
+    if (fx < 0 || fy < 0 || fx >= 1 || fy >= 1) return false;
+    const x0 = Math.floor(fx * m.cw);
+    const y0 = Math.floor(fy * m.ch);
+    // 손가락 크기만큼 주변 몇 칸도 본다
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const x = x0 + dx;
+        const y = y0 + dy;
+        if (x >= 0 && y >= 0 && x < m.cw && y < m.ch && m.alpha[y * m.cw + x] > 40) return true;
+      }
+    }
+    return false;
+  }
+
   function measure(url) {
     if (measureCache.has(url)) return measureCache.get(url);
     const img = keep.get(url);
     if (!img) return null;
     const w = img.naturalWidth;
     const h = img.naturalHeight;
-    let res = { w, h, footPad: 0, footX: 0.5 };
+    let res = { w, h, footPad: 0, headPad: 0, footX: 0.5 };
     try {
       // 계산은 줄인 크기로 (빠르게)
-      const k = Math.min(1, 400 / Math.max(w, h));
+      const k = Math.min(1, 600 / Math.max(w, h));
       const cw = Math.max(1, Math.round(w * k));
       const ch = Math.max(1, Math.round(h * k));
       const cv = document.createElement('canvas');
@@ -122,15 +142,23 @@ const Assets = (() => {
       const g = cv.getContext('2d', { willReadFrequently: true });
       g.drawImage(img, 0, 0, cw, ch);
       const a = g.getImageData(0, 0, cw, ch).data;
-      const solid = (x, y) => a[(y * cw + x) * 4 + 3] > 60;
+      // 투명하지 않은 픽셀 (가장자리의 아주 옅은 잔티는 뺀다)
+      const solid = (x, y) => a[(y * cw + x) * 4 + 3] > 24;
+      // 가장 아래 줄 = 발끝, 가장 위 줄 = 머리 끝
       let bottom = ch - 1;
       outer: for (; bottom >= 0; bottom--) for (let x = 0; x < cw; x++) if (solid(x, bottom)) break outer;
+      let top = 0;
+      outerTop: for (; top < ch; top++) for (let x = 0; x < cw; x++) if (solid(x, top)) break outerTop;
       // 발 = 맨 아래에서 높이의 5% 띠 안의 불투명한 부분 가운데
       const band = Math.max(1, Math.round(ch * 0.05));
       let sum = 0;
       let n = 0;
       for (let y = Math.max(0, bottom - band); y <= bottom; y++) for (let x = 0; x < cw; x++) if (solid(x, y)) { sum += x; n += 1; }
-      res = { w, h, footPad: (ch - 1 - bottom) / ch, footX: n ? sum / n / cw : 0.5 };
+      res = { w, h, footPad: (ch - 1 - bottom) / ch, headPad: Math.min(top, bottom) / ch, footX: n ? sum / n / cw : 0.5 };
+      // 누른 곳이 그림의 보이는 부분인지 알아보기 위한 작은 알파 지도
+      const alpha = new Uint8Array(cw * ch);
+      for (let i = 0; i < cw * ch; i++) alpha[i] = a[i * 4 + 3];
+      alphaMaps.set(url, { cw, ch, alpha });
     } catch (e) { /* 캔버스를 못 쓰면 여백 0으로 */ }
     measureCache.set(url, res);
     return res;
@@ -402,7 +430,7 @@ const Assets = (() => {
 
   return {
     CHARACTER_IDS, EXPRESSIONS, BACKGROUNDS, PATHS,
-    URLS, preload, needsLoading, probe, firstOf, measure,
+    URLS, preload, needsLoading, probe, firstOf, measure, opaqueAt,
     picture, standing, nightmare, face, sd, sprite, background, enemy, cg, icon,
     gauge, digits, labeled,
   };

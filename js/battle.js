@@ -167,7 +167,27 @@ Game.registerScreen('battle', {
     fog.append(el('i', 'f1'), el('i', 'f2'), el('i', 'f3'));
     const enemyEl = el('div', 'bt-enemies');
     const partyEl = el('div', 'bt-party');
-    world.append(fog, enemyEl, partyEl);
+    // 적 뒤쪽 먼 바닥에 한 겹 더 까는 안개 (멀리 있는 느낌)
+    const farFog = el('div', 'bt-fog-far');
+    farFog.append(el('i', 'f1'), el('i', 'f2'));
+    world.append(fog, farFog, enemyEl, partyEl);
+    // 그림 상자는 투명한 여백이 넓어서 앞 캐릭터의 여백이 뒤 캐릭터를 가린다.
+    // 누른 자리에서 실제로 보이는 그림 중 가장 앞의 것을 고른다.
+    world.addEventListener('click', (e) => {
+      const fig = e.target.closest && e.target.closest('.bt-figure');
+      if (!fig) return;
+      e.stopPropagation();
+      const figs = document.elementsFromPoint(e.clientX, e.clientY).map((n) => n.closest && n.closest('.bt-figure')).filter(Boolean);
+      const uniq = [...new Set(figs)];
+      const hit = uniq.find((f) => {
+        if (!f.dataset.url) return true;
+        const r = f.getBoundingClientRect();
+        return Assets.opaqueAt(f.dataset.url, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+      }) || fig;
+      const uid = hit.closest('.bt-unit').dataset.uid;
+      const unit = everyUnit().find((x) => String(x.uid) === uid);
+      if (unit) onUnitTap(unit);
+    }, true);
     // 아래 HUD: 부원 상태(얼굴·게이지) + 행동
     const hud = el('div', 'bt-hud');
     const statusEl = el('div', 'bt-status');
@@ -180,9 +200,12 @@ Game.registerScreen('battle', {
     const head = el('div', 'bt-panel-head');
     head.append(actorEl, descEl);
     panel.append(head, actionsEl, logEl);
+    // 왼쪽: 부원 상태 카드 (앞쪽 아군의 발 아래). 오른쪽: 대기 부원 + 설명창
     const leftCol = el('div', 'bt-hud-left');
-    leftCol.append(benchEl, statusEl);
-    hud.append(leftCol, panel);
+    leftCol.append(statusEl);
+    const rightCol = el('div', 'bt-hud-right');
+    rightCol.append(benchEl, panel);
+    hud.append(leftCol, rightCol);
     const cutin = el('div', 'bt-cutin');
     s.root.append(world, timeline, hud, cutin);
 
@@ -205,29 +228,48 @@ Game.registerScreen('battle', {
     }
 
     // ===== 바닥 배치 =====
-    // 아군: 화면 아래 왼쪽. 앞(0번)일수록 크고 아래, 뒤일수록 작고 위. x·y 는 발끝 위치(무대 px), h 는 키
+    // 위치는 화면 비율(1280×720 기준 %)로 정한다. 무대(1920×1080)가 통째로 확대·축소되므로 어느 화면에서도 같은 비율.
+    // x·y = 발끝 위치(화면 가로·세로 %), s = 크기 배율 (1 = 화면 높이의 BASE_H 만큼 키)
+    const SW = Game.STAGE_W;
+    const SH = Game.STAGE_H;
+    const BASE_H = 0.42;
+    const spot = ({ x, y, s: k }) => ({ x: (x / 100) * SW, y: (y / 100) * SH, h: Math.round(k * BASE_H * SH) });
+    // 아군: 왼쪽 위 → 오른쪽 아래 대각선. 아래(앞)로 올수록 크다
     const ALLY_FLOOR = [
-      { x: 330, y: 805, h: 470 },
-      { x: 640, y: 735, h: 405 },
-      { x: 905, y: 672, h: 348 },
-    ];
-    // 적: 화면 위 오른쪽, 안개 낀 먼 바닥. 뒤(오른쪽)로 갈수록 작고 위
+      { x: 16, y: 56, s: 0.85 },
+      { x: 26, y: 66, s: 0.95 },
+      { x: 37, y: 77, s: 1.05 },
+    ].map(spot);
+    // 적: 아군 대각선과 나란한 선을 오른쪽 위로 옮긴 자리. 선 위의 위치 t(0~1)로 정한다
+    const ENEMY_LINE = { from: { x: 60, y: 40, s: 0.6 }, to: { x: 84, y: 50, s: 0.75 } };
+    const enemyLineAt = (t) => {
+      const { from: a, to: b } = ENEMY_LINE;
+      // 가운데 자리(t=0.5)는 x 72%, y 45%, 크기 0.68
+      const mid = { x: 72, y: 45, s: 0.68 };
+      const lerp = (p, q, u) => ({ x: p.x + (q.x - p.x) * u, y: p.y + (q.y - p.y) * u, s: p.s + (q.s - p.s) * u });
+      return spot(t <= 0.5 ? lerp(a, mid, t * 2) : lerp(mid, b, (t - 0.5) * 2));
+    };
+    const ENEMY_SLOTS = { 1: [0.5], 2: [0.25, 0.75], 3: [0, 0.5, 1] };
+    const BOSS_FLOOR = spot({ x: 74, y: 50, s: 1.05 });
     function enemyFloor(i, n, boss) {
-      if (boss) return { x: 1450, y: 650, h: 430 };
-      const k = n === 1 ? 0.5 : i / (n - 1);
-      return { x: 1180 + k * 520, y: 640 - k * 70, h: 230 - k * 40 };
+      if (boss) return BOSS_FLOOR;
+      const slots = ENEMY_SLOTS[n] || Array.from({ length: n }, (_, k) => k / (n - 1));
+      return enemyLineAt(slots[i] != null ? slots[i] : 0.5);
     }
+    // 겹침 순서: 발끝이 아래(화면 앞)일수록 위에 그린다
+    const zFor = (fl) => String(100 + Math.round(fl.y));
 
     /**
      * 발끝이 (0,0)에 오도록 그림을 놓는다. 그림 아래쪽 빈 여백과 발의 가로 위치는 그림에서 잰다.
      * tint: 배경 조명에 맞춘 아주 약한 푸른 보라 색조를 그림 모양대로 덧씌운다.
      */
-    function figure(candidates, h, { tint = false, fallback } = {}) {
+    function figure(candidates, h, { tint = false, fallback, onMeasure } = {}) {
       const fig = el('div', 'bt-figure');
       Assets.firstOf(candidates).then((url) => {
         if (!url) {
           if (fallback) fig.appendChild(fallback());
           fig.classList.add('failed');
+          if (onMeasure) onMeasure({ top: 330 });
           return;
         }
         const m = Assets.measure(url) || { w: 3, h: 4, footPad: 0, footX: 0.5 };
@@ -236,11 +278,14 @@ Game.registerScreen('battle', {
         fig.style.height = `${h}px`;
         fig.style.left = `${-m.footX * w}px`;
         fig.style.bottom = `${-m.footPad * h}px`;
+        // 발끝에서 머리 끝까지의 실제 높이 (적 정보 상자를 머리 위에 붙일 때 쓴다)
+        if (onMeasure) onMeasure({ top: h * (1 - m.footPad - (m.headPad || 0)) });
         const img = document.createElement('img');
         img.src = url;
         img.alt = '';
         img.draggable = false;
         fig.appendChild(img);
+        fig.dataset.url = url;
         if (tint) {
           const t = el('i', 'bt-tint');
           t.style.webkitMaskImage = t.style.maskImage = `url("${url}")`;
@@ -304,7 +349,7 @@ Game.registerScreen('battle', {
       card.style.left = `${fl.x}px`;
       card.style.top = `${fl.y}px`;
       card.style.setProperty('--h', `${fl.h}px`);
-      card.style.zIndex = String(Math.round(fl.y));
+      card.style.zIndex = zFor(fl);
       const info = el('div', 'bt-info');
       info.appendChild(el('div', 'bt-name', u.name));
       u.ui = { card, hp: bar('hp', '체력'), weak: bar('weak', '약점'), tags: el('div', 'bt-tags') };
@@ -313,11 +358,50 @@ Game.registerScreen('battle', {
       // 같은 적이 여럿이면 images 를 돌아가며 쓴다 (그늘 A·B·C → shade_1·2·3)
       const imgs = u.data.images && u.data.images.length ? u.data.images : [u.id];
       const key = imgs[u.index % imgs.length];
-      body.appendChild(figure(Assets.URLS.enemy(key), fl.h, { fallback: () => Assets.enemy(key, u.name, 'bt-pic') }));
+      body.appendChild(figure(Assets.URLS.enemy(key), fl.h, {
+        fallback: () => Assets.enemy(key, u.name, 'bt-pic'),
+        // 정보 상자는 머리 바로 위
+        onMeasure: ({ top }) => { u.ui.headTop = top; placeEnemyInfo(); },
+      }));
       u.ui.body = body;
+      u.ui.info = info;
+      u.ui.floor = fl;
       card.append(shadowEl(fl.h), body, info);
       card.addEventListener('click', () => onUnitTap(u));
       enemyEl.appendChild(card);
+    }
+
+    /**
+     * 적 정보 상자: 각 적의 머리 바로 위. 옆 상자와 겹치면 하나 걸러 위로 살짝 올려 엇갈리게 하고,
+     * 화면 위로 넘치면 화면 안으로 내린다.
+     */
+    function placeEnemyInfo() {
+      const ready = enemies.filter((e) => e.ui.headTop != null);
+      const INFO_SCALE = 0.7;
+      const boxes = ready.map((e) => {
+        const w = e.ui.info.offsetWidth * INFO_SCALE;
+        const h = e.ui.info.offsetHeight * INFO_SCALE;
+        const bottom = e.ui.floor.y - e.ui.headTop - 6; // 상자 아래 끝 (무대 좌표)
+        return { e, x: e.ui.floor.x, w, h, bottom, lift: 0 };
+      }).sort((a, b) => a.x - b.x);
+      const overlap = (a, b) => Math.abs(a.x - b.x) < (a.w + b.w) / 2 + 4
+        && !(a.bottom - a.lift <= b.bottom - b.lift - b.h || b.bottom - b.lift <= a.bottom - a.lift - a.h);
+      boxes.forEach((b, i) => {
+        if (i > 0 && overlap(boxes[i - 1], b)) b.lift = boxes[i - 1].lift > 0 ? 0 : boxes[i - 1].h * 0.6;
+      });
+      // 위쪽 차례표와 가로로 겹치는 상자는 차례표 아래로, 나머지는 화면 위 끝 안으로
+      const st = s.root.getBoundingClientRect();
+      const k = st.width / SW || 1;
+      const tr = timeline.getBoundingClientRect();
+      const tl = { left: (tr.left - st.left) / k, right: (tr.right - st.left) / k, bottom: (tr.bottom - st.top) / k };
+      for (const b of boxes) {
+        let lift = b.lift;
+        const top = b.bottom - lift - b.h;
+        const underBar = b.x + b.w / 2 > tl.left && b.x - b.w / 2 < tl.right;
+        const minTop = underBar ? tl.bottom + 6 : 8;
+        if (top < minTop) lift -= minTop - top;
+        b.e.ui.info.style.bottom = `${b.e.ui.headTop + 6 + lift}px`;
+      }
     }
 
     function layoutParty() {
@@ -326,7 +410,8 @@ Game.registerScreen('battle', {
         const card = u.ui.card;
         card.style.left = `${fl.x}px`;
         card.style.top = `${fl.y}px`;
-        card.style.zIndex = String(10 - i);
+        card.style.zIndex = zFor(fl);
+        card.dataset.slot = String(i);
         card.style.setProperty('--h', `${fl.h}px`);
         if (u.ui.h !== fl.h) {
           // 자리(크기)가 바뀌면 그림과 그림자를 그 크기로 다시 만든다
