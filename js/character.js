@@ -47,11 +47,8 @@ Game.registerScreen('character', {
     }
 
     function bar(value, max, cls = '') {
-      const track = el('div', `cs-bar ${cls}`);
-      const fill = el('i');
-      fill.style.width = `${Math.max(0, Math.min(1, value / max)) * 100}%`;
-      track.appendChild(fill);
-      return track;
+      // gauge_exp / gauge_dep / gauge_bond
+      return Assets.gauge(cls, max ? value / max : 0, 'cs-bar');
     }
 
     function panel(title, extra) {

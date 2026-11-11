@@ -557,3 +557,142 @@ html, body, button, input { font-family: var(--font-body); }
 /* 팝업·대사는 머리 높이 근처 */
 .bt-unit .bt-pop { top: calc(var(--h) * -0.7 + var(--pop-offset, 0px)); }
 .bt-unit .bt-say { top: calc(var(--h) * -1 - 30px); }
+
+
+/* ===== 게이지 (Assets.gauge): 틀은 가로 3분할로 늘어나고, 막대는 --f(0~1)만큼 잘려 보인다 ===== */
+.gauge { --gh: 34px; --f: 0; position: relative; display: block; box-sizing: border-box; height: var(--gh); min-width: calc(var(--gh) * 3); border-style: solid; flex: 0 0 auto; }
+.gauge > i { position: absolute; display: block; box-sizing: border-box; border-style: solid; opacity: calc(var(--f) * 1000); transition: clip-path 0.4s ease; pointer-events: none; }
+.gauge.g-exp { border-image: url("../assets/ui/gauge_exp_frame.png") 0 62 0 175 fill / 0 calc(var(--gh) * 0.3949) 0 calc(var(--gh) * 1.1146) stretch; border-width: 0 calc(var(--gh) * 0.3949) 0 calc(var(--gh) * 1.1146); }
+.gauge.g-exp > i { top: calc(var(--gh) * 0.3822); bottom: calc(var(--gh) * 0.1592); left: calc(var(--gh) * -0.4268); right: calc(var(--gh) * -0.2611); border-image: url("../assets/ui/gauge_exp_fill.png") 0 49 0 49 fill / 0 calc(var(--gh) * 0.2293) 0 calc(var(--gh) * 0.2293) stretch; border-width: 0 calc(var(--gh) * 0.2293) 0 calc(var(--gh) * 0.2293); clip-path: inset(0 calc((1 - var(--f)) * 100%) 0 0); }
+.gauge.g-dep { border-image: url("../assets/ui/gauge_dep_frame.png") 0 62 0 150 fill / 0 calc(var(--gh) * 0.3827) 0 calc(var(--gh) * 0.9259) stretch; border-width: 0 calc(var(--gh) * 0.3827) 0 calc(var(--gh) * 0.9259); }
+.gauge.g-dep > i { top: calc(var(--gh) * 0.2222); bottom: calc(var(--gh) * 0.3272); left: calc(var(--gh) * -0.1358); right: calc(var(--gh) * -0.2531); border-image: url("../assets/ui/gauge_dep_fill.png") 0 49 0 49 fill / 0 calc(var(--gh) * 0.2253) 0 calc(var(--gh) * 0.2253) stretch; border-width: 0 calc(var(--gh) * 0.2253) 0 calc(var(--gh) * 0.2253); clip-path: inset(0 calc((1 - var(--f)) * 100%) 0 0); }
+.gauge.g-bond { border-image: url("../assets/ui/gauge_bond_frame.png") 0 62 0 195 fill / 0 calc(var(--gh) * 0.4079) 0 calc(var(--gh) * 1.2829) stretch; border-width: 0 calc(var(--gh) * 0.4079) 0 calc(var(--gh) * 1.2829); }
+.gauge.g-bond > i { top: calc(var(--gh) * 0.2566); bottom: calc(var(--gh) * 0.2632); left: calc(var(--gh) * -0.3684); right: calc(var(--gh) * -0.2697); border-image: url("../assets/ui/gauge_bond_fill.png") 0 49 0 49 fill / 0 calc(var(--gh) * 0.2401) 0 calc(var(--gh) * 0.2401) stretch; border-width: 0 calc(var(--gh) * 0.2401) 0 calc(var(--gh) * 0.2401); clip-path: inset(0 calc((1 - var(--f)) * 100%) 0 0); }
+.gauge.g-stamina { border-image: url("../assets/ui/gauge_stamina_frame.png") 0 62 0 140 fill / 0 calc(var(--gh) * 0.4189) 0 calc(var(--gh) * 0.9459) stretch; border-width: 0 calc(var(--gh) * 0.4189) 0 calc(var(--gh) * 0.9459); }
+.gauge.g-stamina > i { top: calc(var(--gh) * 0.3581); bottom: calc(var(--gh) * 0.1486); left: calc(var(--gh) * -0.5743); right: calc(var(--gh) * -0.277); border-image: url("../assets/ui/gauge_stamina_fill.png") 0 49 0 49 fill / 0 calc(var(--gh) * 0.2466) 0 calc(var(--gh) * 0.2466) stretch; border-width: 0 calc(var(--gh) * 0.2466) 0 calc(var(--gh) * 0.2466); clip-path: inset(0 calc((1 - var(--f)) * 100%) 0 0); }
+.gauge.g-hp { border-image: url("../assets/ui/gauge_hp_frame.png") 0 95 0 95 fill / 0 calc(var(--gh) * 0.5655) 0 calc(var(--gh) * 0.5655) stretch; border-width: 0 calc(var(--gh) * 0.5655) 0 calc(var(--gh) * 0.5655); }
+.gauge.g-hp > i { top: 0; bottom: 0; left: calc(var(--gh) * -0.5655); right: calc(var(--gh) * -0.5655); border-image: url("../assets/ui/gauge_hp_fill.png") 0 90 0 90 fill / 0 calc(var(--gh) * 0.5806) 0 calc(var(--gh) * 0.5806) stretch; border-width: 0 calc(var(--gh) * 0.5806) 0 calc(var(--gh) * 0.5806); clip-path: inset(0 calc(100% - 8.0727% - 88.0928% * var(--f)) 0 0); }
+.gauge.g-heart { border-image: url("../assets/ui/gauge_heart_frame.png") 0 100 0 100 fill / 0 calc(var(--gh) * 0.5714) 0 calc(var(--gh) * 0.5714) stretch; border-width: 0 calc(var(--gh) * 0.5714) 0 calc(var(--gh) * 0.5714); }
+.gauge.g-heart > i { top: 0; bottom: 0; left: calc(var(--gh) * -0.5714); right: calc(var(--gh) * -0.5714); border-image: url("../assets/ui/gauge_heart_fill.png") 0 100 0 100 fill / 0 calc(var(--gh) * 0.5495) 0 calc(var(--gh) * 0.5495) stretch; border-width: 0 calc(var(--gh) * 0.5495) 0 calc(var(--gh) * 0.5495); clip-path: inset(0 calc(100% - 8.0972% - 83.8057% * var(--f)) 0 0); }
+.gauge .cn-mark { z-index: 1; top: 18%; bottom: 18%; width: 2px; background: rgba(59, 53, 80, 0.35); }
+
+/* 캐릭터 화면·결과창 막대 */
+.cs-bar.gauge { --gh: 34px; height: var(--gh); background: none; border-radius: 0; overflow: visible; }
+.rs-track.gauge { --gh: 40px; height: var(--gh); background: none; border-radius: 0; overflow: visible; }
+.rs-track.gauge > i { transition: clip-path 0.9s ease-out; }
+
+/* 상담: 스탯 막대 (기분 gauge_hp, 신뢰 gauge_bond, 자신감 gauge_heart), 체력 gauge_stamina */
+.cn-track.gauge { --gh: 34px; height: var(--gh); background: none; border-radius: 0; overflow: visible; }
+.cn-stat { grid-template-columns: 110px 1fr 58px 54px; }
+.cn-stamina { width: 860px; gap: 12px; }
+.cn-stamina-gauge { --gh: 46px; }
+.cn-stamina-val { flex: 0 0 auto; font-size: 26px; color: #fff; text-shadow: 0 1px 3px #000; font-variant-numeric: tabular-nums; }
+
+/* ===== 그림 위 글자 (Assets.labeled) ===== */
+.img-label { position: relative; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; flex: 0 0 auto; }
+.img-label-text { position: relative; white-space: nowrap; }
+
+/* 상태 꼬리표: tag_* (구멍·끈 쪽은 늘리지 않는다) */
+.bt-tag.img-label {
+  height: 34px; padding: 0 4px 0 0; font-size: 16px; color: var(--ink); background: none !important; border-radius: 0;
+  border-style: solid; border-image: var(--img) 0 40 0 130 fill / 0 9px 0 30px stretch; border-width: 0 9px 0 30px;
+}
+.bt-tag.img-label .img-label-text { top: -1px; }
+
+/* 등급 배지: badge_bronze / silver / gold 메달 위에 등급 글자 */
+.cn-badge { width: 54px; height: 60px; background: var(--img) center / contain no-repeat; padding: 0; border-radius: 0; }
+.cn-badge .img-label-text { top: 5px; font-family: var(--font-hand); font-size: 28px; line-height: 1; color: var(--ink); }
+.cn-badge.small { width: 44px; height: 49px; }
+.cn-badge.small .img-label-text { top: 4px; font-size: 23px; }
+.cn-grade.cn-badge { background-color: transparent; justify-self: center; }
+.cn-cap-row { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; color: var(--ink); }
+.cn-info .cn-cap-row { color: inherit; }
+
+/* ===== 전투: 대기 칸 작은 체력 막대, 피해 숫자, 컷인 띠 ===== */
+.bt-mini-hp.gauge { --gh: 20px; grid-column: 2; min-width: 0; }
+.bt-pop.num { display: flex; padding: 0; background: none; text-shadow: none; }
+.digits { display: inline-flex; align-items: flex-end; }
+.digits img { height: 1em; width: auto; margin: 0 -0.06em; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45)); }
+.digits-sign { font-family: var(--font-hand); line-height: 0.9; margin-right: 0.04em; color: inherit; -webkit-text-stroke: 3px #2f2a55; paint-order: stroke; }
+.bt-pop.num { font-size: 64px; }
+.bt-pop.num.combo .digits img { filter: url(#tint-combo) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45)); }
+.bt-pop.num.hurt .digits img { filter: url(#tint-hurt) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45)); }
+.bt-pop.num.heal .digits img { filter: url(#tint-heal) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45)); }
+.bt-pop.num.heal .digits-sign { color: #a8f0b8; }
+
+.bt-cutin-band { top: 300px; height: 420px; background: url("../assets/ui/ui_cutin_band.png") center / 100% 100% no-repeat; }
+.bt-cutin-who, .bt-cutin-skill { color: var(--ink); text-shadow: 0 0 10px #fff, 0 0 4px #fff; }
+.bt-cutin-text { top: 120px; }
+
+/* ===== 부실: 벽시계, 다음 악몽 메모, 말풍선 ===== */
+.room-clock { left: 300px; top: 30px; width: 180px; height: 167px; background: url("../assets/ui/ui_wall_clock.png") center / 100% 100% no-repeat; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35)); }
+/* 그림 속 시계판 중심(49.6%, 45.8%)·반지름(너비의 38.5%)에 맞춘다 */
+.room-clock svg { position: absolute; left: 19.9px; top: 7.3px; width: 138.6px; height: 138.6px; }
+.room-clock .tick { stroke: #3b3550; stroke-width: 2; stroke-linecap: round; }
+.room-clock .tick.major { stroke-width: 3.5; }
+.room-clock .hand { stroke: #3b3550; }
+
+.room-board {
+  left: 790px; top: 18px; width: 330px; height: 349px; padding: 70px 34px 40px; gap: 4px;
+  color: var(--ink); background: url("../assets/ui/ui_board_card.png") center / 100% 100% no-repeat;
+  border: none; border-radius: 0; box-shadow: none; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.35));
+}
+@media (hover: hover) and (pointer: fine) { .room-board:hover { filter: drop-shadow(0 0 10px #fff) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.35)); } }
+.room-board-label { font-size: 30px; color: #8a3d5c; }
+.room-board-name { font-family: var(--font-hand); font-weight: 400; font-size: 92px; line-height: 1; }
+.room-board-sub { font-size: 24px; color: var(--ink-dim); }
+
+.room-bubble {
+  width: 440px; padding: 2px 4px; background: none !important; border-radius: 0; box-shadow: none;
+  border-style: solid; border-image: url("../assets/ui/ui_speech_bubble.png") 110 140 170 140 fill / 28.5px 36px 44px 36px stretch;
+  border-width: 28.5px 36px 44px 36px; filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.3));
+}
+.room-bubble::after, .room-bubble.teacher::after { display: none; }
+.room-bubble.teacher .room-bubble-name { color: #3c7a66; }
+.room-bubble-name { color: #8a3d5c; }
+.room-bubble-next { right: 0; bottom: 0; color: var(--ink-dim); }
+
+/* ===== 장 선택: 점선 길 (ui_path_dot) ===== */
+.wb-dots { position: absolute; inset: 0; pointer-events: none; }
+.wb-dot { position: absolute; width: 18px; height: 17px; }
+.wb-dot.locked { opacity: 0.75; filter: url(#tint-navy) grayscale(1) brightness(1.9); }
+.wb-dot.done { filter: url(#tint-navy); }
+
+/* ===== 대사: 스테이지 제목 띠 (ui_title_band), 튜토리얼 꼬리표 (ui_tutorial_tag) ===== */
+.dlg-heading {
+  display: flex; align-items: center; height: 84px; padding: 12px 8px 0; font-size: 38px; color: var(--ink);
+  background: none; border-radius: 0; border-style: solid;
+  border-image: url("../assets/ui/ui_title_band.png") 0 230 0 270 fill / 0 46px 0 54px stretch; border-width: 0 46px 0 54px;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+.dlg-tutorial-tag, .bt-tutorial-tag {
+  height: 46px; padding: 0 6px; line-height: 46px; color: #fff; background: none !important; border-radius: 0;
+  border-style: solid; border-image: url("../assets/ui/ui_tutorial_tag.png") 0 120 0 120 fill / 0 24px 0 24px stretch; border-width: 0 24px;
+}
+
+/* ===== 설정 슬라이더: slider_track (자) + slider_knob ===== */
+input[type=range]::-webkit-slider-runnable-track {
+  height: 30px; border-radius: 0; background: none;
+  border-style: solid; border-image: url("../assets/ui/slider_track.png") 0 60 0 60 fill / 0 16px 0 16px stretch; border-width: 0 16px;
+}
+input[type=range]::-moz-range-track {
+  height: 30px; border-radius: 0; background: none;
+  border-style: solid; border-image: url("../assets/ui/slider_track.png") 0 60 0 60 fill / 0 16px 0 16px stretch; border-width: 0 16px;
+}
+input[type=range]::-webkit-slider-thumb {
+  width: 58px; height: 58px; margin-top: -14px; border: none; border-radius: 0;
+  background: url("../assets/ui/slider_knob.png") center / contain no-repeat; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+}
+input[type=range]::-moz-range-thumb {
+  width: 58px; height: 58px; border: none; border-radius: 0;
+  background: url("../assets/ui/slider_knob.png") center / contain no-repeat;
+}
+
+/* ===== 세로 화면 안내: ui_rotate_notice ===== */
+#rotate-notice .rotate-img { width: min(78vw, 560px); height: auto; }
+#rotate-notice p { font-family: var(--font-hand); font-size: 34px; }
+.cn-stat .cn-badge.cn-grade { background: var(--img) center / contain no-repeat; padding: 0; border-radius: 0; }
+.cn-pick .cn-cap-row { font-size: 18px; white-space: nowrap; }
+.rs-track.gauge, .cn-stamina-gauge { flex: 1 1 auto; }
+.gauge > i { width: auto !important; height: auto !important; background: none !important; border-radius: 0 !important; }
+.cs-bar.gauge { --gh: 40px; }

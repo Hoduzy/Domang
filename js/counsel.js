@@ -152,6 +152,7 @@ Game.registerScreen('counsel', {
     const el = Game.el;
     const C = Game.data.counsel;
     const GRADE_LABEL = Game.data.promises.grades;
+    const STAT_GAUGE = { mood: 'hp', trust: 'bond', confidence: 'heart' };
     let alive = true;
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms * (window.CounselTiming || 1)));
     s.root.classList.add('counsel');
@@ -184,7 +185,9 @@ Game.registerScreen('counsel', {
         card.appendChild(Assets.standing(c, 'default', 'cn-pick-pic'));
         card.appendChild(el('div', 'cn-pick-name', c.name));
         card.appendChild(el('div', 'cn-pick-meta', `Lv ${rec.level} · 체력 소모 ${Counsel.band(rec.level).cost}%`));
-        card.appendChild(el('div', `cn-cap ${g.cap}`, `최대 ${GRADE_LABEL[g.cap]} · ${g.label}`));
+        const capRow = el('div', 'cn-cap-row');
+        capRow.append(Assets.labeled(`badge_${g.cap}`, GRADE_LABEL[g.cap], `cn-badge ${g.cap}`), el('span', 'cn-cap-text', `최대 · ${g.label}`));
+        card.appendChild(capRow);
         card.appendChild(el('div', 'cn-pref', `좋아함 · ${Counsel.activity(pref.favorite).name}`));
         card.appendChild(el('div', 'cn-pref hard', `힘들어함 · ${Counsel.activity(pref.hard).name}`));
         if (Save.data.counsel.sorry[c.id]) card.appendChild(el('div', 'cn-sorry-tag', '지난 회차 중단'));
@@ -259,7 +262,9 @@ Game.registerScreen('counsel', {
       area.appendChild(cal);
       head.appendChild(el('div', 'cn-day', `${josa(c.name, '과', '와')}의 방과후`));
       const info = el('div', 'cn-info');
-      info.appendChild(el('span', `cn-cap ${run.cap}`, `최대 ${GRADE_LABEL[run.cap]}`));
+      const capInfo = el('span', 'cn-cap-row');
+      capInfo.append(el('span', 'cn-cap-text', '최대'), Assets.labeled(`badge_${run.cap}`, GRADE_LABEL[run.cap], `cn-badge small ${run.cap}`));
+      info.appendChild(capInfo);
       info.appendChild(el('span', 'cn-rate', `성장률 ×${run.rate}${Counsel.slowed(run) ? ` → ×${run.rate * C.penalty.slowRate} (성장 둔화)` : ''}`));
       if (run.lowDays >= C.penalty.warnDays) info.appendChild(el('span', 'cn-warn', `경고 ${run.lowDays}일째`));
       head.appendChild(info);
@@ -281,10 +286,8 @@ Game.registerScreen('counsel', {
         const nm = el('span', 'cn-stat-name');
         nm.append(Assets.icon(`stat_${st.id}`, 'cn-stat-icon'), el('span', null, st.name));
         row.appendChild(nm);
-        const track = el('div', 'cn-track');
-        const fill = el('i');
-        fill.style.width = `${v}%`;
-        track.appendChild(fill);
+        // 기분 gauge_hp, 신뢰 gauge_bond, 자신감 gauge_heart
+        const track = Assets.gauge(STAT_GAUGE[st.id] || 'hp', v / 100, 'cn-track');
         for (const gr of C.grades.slice(1)) {
           const mark = el('b', 'cn-mark');
           mark.style.left = `${gr.min}%`;
@@ -292,7 +295,8 @@ Game.registerScreen('counsel', {
         }
         row.appendChild(track);
         row.appendChild(el('span', 'cn-stat-val', fmt(v)));
-        row.appendChild(el('span', `cn-grade ${Counsel.gradeFor(v, run.cap)}`, GRADE_LABEL[Counsel.gradeFor(v, run.cap)]));
+        const gr = Counsel.gradeFor(v, run.cap);
+        row.appendChild(Assets.labeled(`badge_${gr}`, GRADE_LABEL[gr], `cn-badge cn-grade ${gr}`));
         stats.appendChild(row);
       }
       left.appendChild(stats);
@@ -304,13 +308,10 @@ Game.registerScreen('counsel', {
       const staminaRow = el('div', 'cn-stamina');
       staminaRow.appendChild(Assets.icon('stat_stamina', 'cn-stat-icon'));
       staminaRow.appendChild(el('span', 'cn-stamina-label', `체력 (레벨 구간 ${Counsel.band(rec.level).name} · 한 칸 ${Counsel.band(rec.level).cost}%)`));
-      const sTrack = el('div', 'cn-stamina-track');
-      pv.forEach((p) => {
-        const seg = el('i', p.act.rest ? 'rest' : '');
-        seg.style.height = `${p.stamina}%`;
-        sTrack.appendChild(seg);
-      });
-      staminaRow.appendChild(sTrack);
+      // gauge_stamina: 오늘 시간표를 다 보낸 뒤 남는 체력
+      const endStamina = pv.length ? pv[pv.length - 1].stamina : C.stamina.max;
+      staminaRow.appendChild(Assets.gauge('stamina', endStamina / C.stamina.max, 'cn-stamina-gauge'));
+      staminaRow.appendChild(el('span', 'cn-stamina-val', `${Math.round(endStamina)}%`));
       right.appendChild(staminaRow);
 
       // 시간표: ui_timetable 코르크판의 5×3 칸에 포스트잇(ui_tile)을 붙인다

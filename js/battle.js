@@ -288,8 +288,9 @@ Game.registerScreen('battle', {
       mini.style.setProperty('--chip', u.color);
       mini.appendChild(Assets.face(u.data, 'bt-face small'));
       mini.appendChild(el('span', 'bt-bench-name', u.name));
-      u.ui.miniHp = bar('hp', '체력');
-      mini.appendChild(u.ui.miniHp.wrap);
+      // 작은 체력 막대: gauge_hp_frame + gauge_hp_fill
+      u.ui.miniHp = Assets.gauge('hp', 1, 'bt-mini-hp');
+      mini.appendChild(u.ui.miniHp);
       mini.addEventListener('click', () => onUnitTap(u));
       u.ui.mini = mini;
     }
@@ -381,18 +382,29 @@ Game.registerScreen('battle', {
       return t;
     }
 
+    // 상태 꼬리표 그림: 얼어붙음/숨음/약점 터짐/좋은 상태/나쁜 상태/회복
+    function tagImage(cls) {
+      const c = cls.split(' ')[0];
+      if (c === 'frozen') return 'tag_frozen';
+      if (c === 'stealth') return 'tag_hidden';
+      if (c === 'broken') return 'tag_weakbreak';
+      if (c === 'cover' || c === 'charge' || c === 'promise') return 'tag_buff';
+      if (c === 'heal') return 'tag_heal';
+      return 'tag_debuff'; // down, mark, cd
+    }
+
     function updateUI() {
       for (const u of everyUnit()) {
         setBar(u.ui.hp, u.hp, u.maxHp);
         if (u.side === 'ally') {
           setBar(u.ui.shake, u.shake, u.shakeMax);
           setBar(u.ui.heart, u.heart, R.HEART_MAX, u.heart >= R.HEART_MAX ? 'MAX' : `${u.heart}`);
-          setBar(u.ui.miniHp, u.hp, u.maxHp);
+          u.ui.miniHp.set(u.hp / u.maxHp);
           u.ui.mini.classList.toggle('down', u.down);
         } else {
           setBar(u.ui.weak, u.weak, u.weakMax);
         }
-        u.ui.tags.replaceChildren(...tags(u).map(([text, cls]) => el('span', `bt-tag ${cls}`, text)));
+        u.ui.tags.replaceChildren(...tags(u).map(([text, cls]) => Assets.labeled(tagImage(cls), text, `bt-tag ${cls}`)));
         u.ui.card.classList.toggle('down', u.down);
         u.ui.card.classList.toggle('frozen', Boolean(u.frozen));
         u.ui.card.classList.toggle('broken', Boolean(u.broken));
@@ -463,7 +475,10 @@ Game.registerScreen('battle', {
     }
 
     function pop(u, text, cls = '') {
-      const p = el('div', `bt-pop ${cls}`, text);
+      // 숫자(피해·회복)는 digit 그림을 이어 붙인다. 회복은 초록 색조
+      const isNum = /^[+]?\d+$/.test(String(text));
+      const p = el('div', `bt-pop${isNum ? ' num' : ''} ${cls}`, isNum ? null : text);
+      if (isNum) p.appendChild(Assets.digits(text, 'bt-pop-digits'));
       const stack = u.ui.card.querySelectorAll('.bt-pop').length;
       p.style.setProperty('--pop-offset', `${stack * 48}px`);
       u.ui.card.appendChild(p);

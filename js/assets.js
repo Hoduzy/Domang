@@ -360,9 +360,50 @@ const Assets = (() => {
     });
   }
 
+  // ----- 게이지: 틀(가로 3분할로 늘어남) + 수치만큼 잘린 막대 -----
+  // kind: hp, heart, exp, dep, bond, stamina. set(0~1) 로 바꾼다.
+  function gauge(kind, frac = 0, className = '') {
+    const box = document.createElement('div');
+    box.className = `gauge g-${kind} ${className}`.trim();
+    box.appendChild(document.createElement('i'));
+    box.set = (f) => { box.style.setProperty('--f', String(Math.max(0, Math.min(1, Number(f) || 0)))); };
+    box.set(frac);
+    return box;
+  }
+
+  // ----- 숫자 그림: digit_0 ~ digit_9 를 이어 붙인다 -----
+  function digits(text, className = '') {
+    const box = document.createElement('span');
+    box.className = `digits ${className}`.trim();
+    box.setAttribute('aria-label', String(text));
+    for (const ch of String(text)) {
+      if (/\d/.test(ch)) {
+        const img = document.createElement('img');
+        img.src = PATHS.ui(`digit_${ch}`);
+        img.alt = '';
+        img.draggable = false;
+        box.appendChild(img);
+      } else {
+        box.appendChild(Object.assign(document.createElement('span'), { className: 'digits-sign', textContent: ch }));
+      }
+    }
+    return box;
+  }
+
+  // ----- 그림 위에 글자: 상태 꼬리표, 등급 배지 -----
+  function labeled(key, text, className = '') {
+    const box = document.createElement('span');
+    box.className = `img-label ${className}`.trim();
+    // 사용자 속성 속 url() 은 css 파일 기준으로 풀리므로 절대 주소로 넣는다
+    box.style.setProperty('--img', `url("${new URL(PATHS.ui(key), document.baseURI).href}")`);
+    box.appendChild(Object.assign(document.createElement('span'), { className: 'img-label-text', textContent: text }));
+    return box;
+  }
+
   return {
     CHARACTER_IDS, EXPRESSIONS, BACKGROUNDS, PATHS,
     URLS, preload, needsLoading, probe, firstOf, measure,
     picture, standing, nightmare, face, sd, sprite, background, enemy, cg, icon,
+    gauge, digits, labeled,
   };
 })();

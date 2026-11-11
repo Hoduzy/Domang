@@ -26,16 +26,14 @@ Game.registerScreen('result', {
       row.style.setProperty('--c', c.color);
       row.appendChild(el('span', 'rs-name', c.name));
       row.appendChild(el('span', 'rs-lv', `Lv ${r.after.level}`));
-      const track = el('div', 'rs-track');
-      const fill = el('i');
+      const track = Assets.gauge('exp', 0, 'rs-track');
       const need = Growth.expToNext(r.after.level);
       // 레벨업했으면 0에서, 아니면 이전 위치에서 채워진다
       const startPct = r.levelUp ? 0 : Math.min(100, (r.before.exp / Growth.expToNext(r.before.level)) * 100);
-      fill.style.width = `${startPct}%`;
-      track.appendChild(fill);
+      track.set(startPct / 100);
       row.appendChild(track);
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        fill.style.width = `${Math.min(100, (r.after.exp / need) * 100)}%`;
+        track.set(r.after.exp / need);
       }));
       const gain = el('span', 'rs-gain', `+${r.gained}${r.reserve ? ' (대기)' : ''}`);
       row.appendChild(gain);

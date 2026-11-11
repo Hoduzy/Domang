@@ -67,9 +67,15 @@ const Preload = (() => {
     }
     items.push(...ui('cmd_hold', 'cmd_stay', 'ui_portrait_frame', 'ui_turn_order', 'ui_skill_card',
       'ui_heart_card', 'ui_command_button', 'gauge_hp_frame', 'gauge_hp_fill', 'gauge_shake_frame',
-      'gauge_shake_fill', 'gauge_heart_frame', 'gauge_heart_fill', 'gauge_weak_frame', 'gauge_weak_fill'));
+      'gauge_shake_fill', 'gauge_heart_frame', 'gauge_heart_fill', 'gauge_weak_frame', 'gauge_weak_fill',
+      'ui_cutin_band', ...TAGS, ...DIGITS));
     return items;
   }
+
+  const TAGS = ['tag_frozen', 'tag_hidden', 'tag_weakbreak', 'tag_buff', 'tag_debuff', 'tag_heal'];
+  const DIGITS = Array.from({ length: 10 }, (_, i) => `digit_${i}`);
+  const BADGES = ['badge_bronze', 'badge_silver', 'badge_gold'];
+  const gauges = (...kinds) => kinds.flatMap((k) => [`gauge_${k}_frame`, `gauge_${k}_fill`]);
 
   const promiseIcons = () => ['smile', 'trust', 'tomorrow'].flatMap((t) => ['bronze', 'silver', 'gold'].map((g) => U.ui(`promise_${t}_${g}`)));
 
@@ -78,7 +84,8 @@ const Preload = (() => {
 
     P('notice', () => [U.background('bg_notice')]);
     P('title', () => [U.ui('logo')]);
-    P('room', () => [U.background('club_room'), ...ids().map((id) => U.standing(id, 'default'))]);
+    P('room', () => [U.background('club_room'), ...ids().map((id) => U.standing(id, 'default')),
+      ...ui('ui_wall_clock', 'ui_board_card', 'ui_speech_bubble')]);
 
     P('dialogue', async (params) => {
       const script = await Story.load(params.file || 'prologue_01');
@@ -86,6 +93,7 @@ const Preload = (() => {
       const items = dialogueItems(script, r ? r.index : 0, 10);
       if (r && r.bgKey) items.push(r.bgKey.startsWith('cg:') ? U.cg(r.bgKey.slice(3)) : U.background(r.bgKey));
       if (r) r.cast.forEach((c) => items.push(U.standing(c.id, c.face)));
+      items.push(...ui('ui_title_band', 'ui_tutorial_tag'));
       return items;
     });
 
@@ -100,18 +108,20 @@ const Preload = (() => {
         ...chars.flatMap((id) => [U.standing(id, 'default'), ...(run ? [U.standing(id, 'sad'), U.standing(id, 'smile'), U.standing(id, 'surprised')] : [])]),
         ...C.activities.filter((a) => a.icon).map((a) => U.ui(a.icon)),
         ...C.stats.map((s) => U.ui(`stat_${s.id}`)), U.ui('stat_stamina'),
-        ...ui('ui_timetable', 'ui_tile', 'ui_day_counter'),
+        ...ui('ui_timetable', 'ui_tile', 'ui_day_counter', ...BADGES, ...gauges('hp', 'bond', 'heart', 'stamina')),
         ...promiseIcons(),
       ];
     });
 
     // 그 밖의 화면
-    P('chapter', () => [U.background('bg_chapter_select'), ...ui('node_locked', 'node_current', 'node_cleared', 'node_boss')]);
+    P('chapter', () => [U.background('bg_chapter_select'), ...ui('node_locked', 'node_current', 'node_cleared', 'node_boss', 'ui_path_dot')]);
     P('formation', () => [...ids().map((id) => U.nightmare(id)), ...ids().map((id) => U.standing(id, 'sad')), U.ui('ui_slot_frame'), ...promiseIcons()]);
     P('character', (params) => {
       const id = params.id || ids()[0];
-      return [U.standing(id, 'default'), U.ui(`skill_${id}_skill`), U.ui(`skill_${id}_heart`)];
+      return [U.standing(id, 'default'), U.ui(`skill_${id}_skill`), U.ui(`skill_${id}_heart`), ...ui(...gauges('exp', 'dep', 'bond'))];
     });
+    P('result', () => ui(...gauges('exp')));
+    P('settings', () => ui('slider_track', 'slider_knob'));
     P('attendance', () => [U.ui('ui_attendance_book'), ...ids().map((id) => U.face(id))]);
     P('gacha', () => [U.background('bg_gacha'), ...ui('card_sr', 'card_ssr'), ...ids().map((id) => U.standing(id, 'smile'))]);
   }

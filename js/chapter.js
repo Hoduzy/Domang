@@ -84,20 +84,44 @@ Game.registerScreen('chapter', {
       });
     }
 
-    function pathThrough(points) {
-      if (!points.length) return '';
-      let d = `M ${points[0].x} ${points[0].y}`;
+    // 길(직선과 굽은 곡선)을 잘게 나눠 따라가며 spacing 마다 점 자리를 뽑는다
+    function dotsAlong(points, spacing) {
+      const samples = [];
+      const nodeAt = [0];
+      let total = 0;
+      let prev = points[0];
+      const push = (q) => {
+        total += Math.hypot(q.x - prev.x, q.y - prev.y);
+        samples.push({ x: q.x, y: q.y, at: total, angle: Math.atan2(q.y - prev.y, q.x - prev.x) * 180 / Math.PI });
+        prev = q;
+      };
       for (let i = 1; i < points.length; i++) {
         const a = points[i - 1];
         const b = points[i];
-        if (a.y !== b.y) {
-          const bend = 170;
-          d += ` C ${a.x + bend} ${a.y} ${b.x + bend} ${b.y} ${b.x} ${b.y}`;
-        } else {
-          d += ` L ${b.x} ${b.y}`;
+        const steps = 120;
+        for (let k = 1; k <= steps; k++) {
+          const t = k / steps;
+          if (a.y !== b.y) {
+            const bend = 170;
+            const p1 = { x: a.x + bend, y: a.y };
+            const p2 = { x: b.x + bend, y: b.y };
+            const u = 1 - t;
+            push({
+              x: u * u * u * a.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * b.x,
+              y: u * u * u * a.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * b.y,
+            });
+          } else {
+            push({ x: a.x + (b.x - a.x) * t, y: a.y });
+          }
         }
+        nodeAt.push(total);
       }
-      return d;
+      const list = [];
+      let next = spacing / 2;
+      for (const sm of samples) {
+        if (sm.at >= next) { list.push(sm); next += spacing; }
+      }
+      return { list, nodeAt };
     }
 
     function renderMain() {
@@ -118,21 +142,21 @@ Game.registerScreen('chapter', {
       const states = stages.map((st) => stageState(c, st.stage));
       const reached = states.reduce((n, st, i) => (st !== 'locked' ? i : n), -1);
 
-      const svgNS = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('viewBox', `0 0 ${PATH_W} ${PATH_H}`);
-      svg.setAttribute('class', 'wb-lines');
-      const all = document.createElementNS(svgNS, 'path');
-      all.setAttribute('d', pathThrough(pts));
-      all.setAttribute('class', 'wb-line locked');
-      svg.appendChild(all);
-      if (reached > 0) {
-        const done = document.createElementNS(svgNS, 'path');
-        done.setAttribute('d', pathThrough(pts.slice(0, reached + 1)));
-        done.setAttribute('class', 'wb-line done');
-        svg.appendChild(done);
+      // 점선 길: ui_path_dot 을 길을 따라 일정한 간격으로 놓고 길 방향으로 돌린다
+      const dots = el('div', 'wb-dots');
+      const { list, nodeAt } = dotsAlong(pts, 30);
+      const doneLen = reached > 0 ? nodeAt[reached] : -1;
+      for (const d of list) {
+        const dot = el('img', `wb-dot ${d.at <= doneLen ? 'done' : 'locked'}`);
+        dot.src = Assets.URLS.ui('ui_path_dot')[0];
+        dot.alt = '';
+        dot.draggable = false;
+        dot.style.left = `${d.x}px`;
+        dot.style.top = `${d.y}px`;
+        dot.style.transform = `translate(-50%, -50%) rotate(${d.angle}deg)`;
+        dots.appendChild(dot);
       }
-      path.appendChild(svg);
+      path.appendChild(dots);
 
       if (selectedStage == null || !stages.find((st) => st.stage === selectedStage)) {
         const cur = stages.find((st, i) => states[i] === 'current');

@@ -39,14 +39,15 @@ Game.registerScreen('room', {
     // ----- 벽시계 -----
     const clock = el('div', 'room-clock');
     clock.setAttribute('role', 'img');
+    // ui_wall_clock 그림 위에 눈금·바늘만 코드로 (바늘은 움직여야 하므로)
     clock.innerHTML = `
       <svg viewBox="0 0 100 100" aria-hidden="true">
-        <circle cx="50" cy="50" r="46" class="face"/>
         ${Array.from({ length: 12 }, (_, i) => {
           const a = (i / 12) * Math.PI * 2;
-          const x1 = 50 + Math.sin(a) * 38; const y1 = 50 - Math.cos(a) * 38;
-          const x2 = 50 + Math.sin(a) * 43; const y2 = 50 - Math.cos(a) * 43;
-          return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tick"/>`;
+          const r1 = i % 3 === 0 ? 37 : 40;
+          const x1 = 50 + Math.sin(a) * r1; const y1 = 50 - Math.cos(a) * r1;
+          const x2 = 50 + Math.sin(a) * 44; const y2 = 50 - Math.cos(a) * 44;
+          return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tick${i % 3 === 0 ? ' major' : ''}"/>`;
         }).join('')}
         <line x1="50" y1="50" x2="50" y2="26" class="hand hour"/>
         <line x1="50" y1="50" x2="50" y2="14" class="hand minute"/>
@@ -77,6 +78,7 @@ Game.registerScreen('room', {
     board.type = 'button';
     board.setAttribute('aria-label', '화이트보드 — 장 선택');
     const next = Game.protagonist(progress.chapter);
+    // ui_board_card: 화이트보드에 자석으로 붙인 보라색 메모
     board.appendChild(el('div', 'room-board-label', '다음 악몽'));
     board.appendChild(el('div', 'room-board-name',
       progress.chapter === 0 ? '프롤로그' : next ? next.name : '—'));
