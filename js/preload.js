@@ -21,6 +21,7 @@ const Preload = (() => {
       const line = lines[i];
       if (line.bg) items.push(U.background(line.bg));
       if (line.cg) items.push(U.cg(line.cg));
+      if (line.note) items.push(U.ui('ui_door_note'));
       if (Array.isArray(line.show)) {
         for (const e of line.show) {
           const id = typeof e === 'string' ? e : e.id;
@@ -37,7 +38,7 @@ const Preload = (() => {
           if (opt.goto != null && script.labels[opt.goto] != null) items.push(...dialogueItems(script, script.labels[opt.goto], 3));
         }
       }
-      if (line.text != null || line.narration != null || line.title != null) shown += 1;
+      if (line.text != null || line.narration != null || line.title != null || line.note != null) shown += 1;
       if (line.battle) break; // 전투 그림은 전투 화면이 불러온다
       const target = line.goto != null ? script.labels[line.goto] : null;
       if (target != null && line.if != null) {

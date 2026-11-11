@@ -41,6 +41,13 @@ const Story = (() => {
       if (line.battle != null && (!Array.isArray(line.battle.enemies) || !line.battle.enemies.length)) {
         throw new Error(`${where(i)}: battle에는 enemies 배열이 필요해요.`);
       }
+      if (line.note != null) {
+        const n = line.note;
+        const okList = (v) => v == null || (Array.isArray(v) && v.every((t) => typeof t === 'string'));
+        if (typeof n !== 'object' || !okList(n.lines) || !okList(n.add) || !((n.lines || []).length + (n.add || []).length)) {
+          throw new Error(`${where(i)}: note는 { "lines": [글 줄들], "add": [나중에 덧쓴 줄들] } 형식이어야 해요.`);
+        }
+      }
       if (line.show != null && (!Array.isArray(line.show) || line.show.length > 3)) {
         throw new Error(`${where(i)}: show는 최대 3명까지의 배열이어야 해요.`);
       }
@@ -130,7 +137,8 @@ Game.registerScreen('dialogue', {
     box.append(nameTag, textEl, nextMark);
     const choicesLayer = el('div', 'dlg-choices');
     const controls = el('div', 'dlg-controls');
-    s.root.append(charsLayer, titleCard, box, choicesLayer, controls);
+    const noteLayer = el('div', 'dlg-note-layer');
+    s.root.append(charsLayer, titleCard, noteLayer, box, choicesLayer, controls);
 
     if (params.heading) s.root.appendChild(el('div', 'dlg-heading', params.heading));
 
@@ -163,7 +171,7 @@ Game.registerScreen('dialogue', {
     let raf = 0;
     let timer = 0;
     let logOverlay = null;
-    const castEls = new Map(); // id → { face, el }
+    const castEls = new Map(); // id → { face, el, body }
 
     // ----- 조건과 값 -----
     function flagValue(name) {
@@ -215,22 +223,67 @@ Game.registerScreen('dialogue', {
       return typeof item === 'string' ? { id: item, face: 'default' } : { id: item.id, face: item.face || 'default' };
     }
 
+    // ----- 스탠딩 (크게: 머리는 화면 위 7%, 허벅지 아래는 대사창 뒤로) -----
+    const HEAD_Y = 0.075 * Game.STAGE_H;  // 머리 꼭대기 (말할 때 살짝 커지면 6~7%)
+    const BODY_H = 1200;                  // 머리 꼭대기 ~ 발끝 (허벅지 윗부분이 대사창 위 끝에 온다)
+    const SLOTS = { 1: [50], 2: [30, 70], 3: [22, 50, 78] }; // 가로 % 자리
+
+    /** 표정 그림 한 장. 그림 속 투명 여백을 재서 머리 꼭대기와 몸 가운데를 맞춘다 */
+    function standingImage(member, face) {
+      const box = el('div', 'dlg-st-img');
+      Assets.firstOf(Assets.URLS.standing(member.id, face)).then((url) => {
+        if (!url) {
+          box.appendChild(Assets.standing(member, face, 'standing dlg-standing'));
+          box.classList.add('failed');
+          return;
+        }
+        const m = Assets.measure(url) || { w: 2, h: 3, footPad: 0, headPad: 0, footX: 0.5 };
+        const h = BODY_H / Math.max(0.3, 1 - (m.footPad || 0) - (m.headPad || 0));
+        const w = h * m.w / m.h;
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.draggable = false;
+        img.style.width = `${w}px`;
+        img.style.height = `${h}px`;
+        img.style.left = `${-m.footX * w}px`;
+        img.style.top = `${HEAD_Y - (m.headPad || 0) * h}px`;
+        box.appendChild(img);
+      });
+      return box;
+    }
+
     function renderCast() {
       const keep = new Set();
+      const slots = SLOTS[Math.min(3, state.cast.length)] || [];
       state.cast.forEach((entry, i) => {
         const member = Game.cast(entry.id);
         if (!member) return;
         keep.add(entry.id);
         let rec = castEls.get(entry.id);
-        if (!rec || rec.face !== entry.face) {
-          const pic = Assets.standing(member, entry.face, 'standing dlg-standing');
-          if (rec) rec.el.replaceWith(pic);
-          rec = { face: entry.face, el: pic };
+        if (!rec) {
+          const actor = el('div', 'dlg-actor');
+          const body = el('div', 'dlg-actor-body');
+          actor.appendChild(body);
+          body.appendChild(standingImage(member, entry.face));
+          charsLayer.appendChild(actor);
+          rec = { face: entry.face, el: actor, body };
           castEls.set(entry.id, rec);
+        } else if (rec.face !== entry.face) {
+          // 표정이 바뀌면 새 그림을 위에 겹쳐 짧게 나타나게 하고, 다 나타나면 옛 그림을 지운다
+          rec.face = entry.face;
+          const next = standingImage(member, entry.face);
+          next.classList.add('swap-in');
+          const olds = [...rec.body.children];
+          next.addEventListener('animationend', () => olds.forEach((o) => o.remove()), { once: true });
+          setTimeout(() => olds.forEach((o) => o.remove()), 600);
+          rec.body.appendChild(next);
         }
-        if (charsLayer.children[i] !== rec.el) charsLayer.insertBefore(rec.el, charsLayer.children[i] || null);
-        const dim = state.dimAll || (state.speakerId != null && state.speakerId !== entry.id);
+        rec.el.style.left = `${slots[i] != null ? slots[i] : 50}%`;
+        const speaking = !state.dimAll && state.speakerId === entry.id;
+        const dim = state.dimAll || (state.speakerId != null && !speaking);
         rec.el.classList.toggle('dim', dim);
+        rec.el.classList.toggle('speaking', speaking);
       });
       for (const [id, rec] of castEls) {
         if (!keep.has(id)) {
@@ -238,6 +291,15 @@ Game.registerScreen('dialogue', {
           castEls.delete(id);
         }
       }
+    }
+
+    /** 말을 시작할 때 살짝 통통 튄다 */
+    function bounceSpeaker() {
+      const rec = state.speakerId != null && !state.dimAll ? castEls.get(state.speakerId) : null;
+      if (!rec) return;
+      rec.body.classList.remove('bounce');
+      void rec.body.offsetWidth;
+      rec.body.classList.add('bounce');
     }
 
     function applyLine(line) {
@@ -301,6 +363,7 @@ Game.registerScreen('dialogue', {
           state.index++;
           continue;
         }
+        if (line.note != null) return showNote(line);
         if (line.title != null) return showTitle(line);
         if (line.tutorial != null) return showTutorial(line);
         if (line.text != null || line.narration != null) return showLine(line);
@@ -343,6 +406,8 @@ Game.registerScreen('dialogue', {
       textEl.replaceChildren();
       nextMark.classList.remove('show');
 
+      if (!isNarration) bounceSpeaker();
+      noteLayer.classList.remove('show');
       const segments = isNarration ? [{ text: line.narration, em: true }] : Story.parseInline(String(line.text));
       typer = new Typer(textEl, segments);
       state.log.push({ kind: isNarration ? 'narration' : 'line', speaker: speakerLabel(line), segments });
@@ -372,6 +437,7 @@ Game.registerScreen('dialogue', {
 
     function showTitle(line) {
       prefetchAhead();
+      noteLayer.classList.remove('show');
       box.classList.add('hidden');
       titleCard.classList.remove('tutorial');
       titleCard.textContent = String(line.title);
@@ -381,8 +447,52 @@ Game.registerScreen('dialogue', {
       scheduleAdvance();
     }
 
+    /**
+     * 쪽지·메모 장면: 메모지(ui_door_note)를 가운데 약간 기울여 띄우고 공책 줄마다 손글씨로 한 줄씩 써 나간다.
+     * note.lines 만 있으면 그 줄들을 차례로 쓴다.
+     * note.add 가 있으면 lines 는 이미 쓰여 있고, add 줄들을 다른 색 펜으로 그 아래에 새로 쓴다.
+     */
+    function showNote(line) {
+      prefetchAhead();
+      box.classList.add('hidden');
+      titleCard.classList.remove('show');
+      const n = line.note;
+      const old = n.add ? (n.lines || []) : [];
+      const fresh = n.add ? n.add : (n.lines || []);
+      const paper = el('div', 'dlg-note');
+      const writing = el('div', 'dlg-note-lines');
+      const anims = [];
+      let delay = 0.35;
+      old.forEach((t) => writing.appendChild(el('div', 'dlg-note-line', t)));
+      fresh.forEach((t) => {
+        const row = el('div', `dlg-note-line write${n.add ? ' added' : ''}`, t);
+        const dur = Math.max(0.45, Math.min(2.2, t.length * 0.085));
+        row.style.setProperty('--d', `${delay}s`);
+        row.style.setProperty('--t', `${dur}s`);
+        delay += dur + 0.25;
+        anims.push(row);
+        writing.appendChild(row);
+      });
+      paper.appendChild(writing);
+      noteLayer.replaceChildren(paper);
+      noteLayer.classList.add('show');
+      const all = [...old, ...fresh.map((t) => (n.add ? `+ ${t}` : t))];
+      state.log.push({ kind: 'title', speaker: '[메모]', segments: [{ text: all.join('\n'), em: false }] });
+      // 다 써질 때까지는 누르면 바로 다 쓰고, 그다음 누르면 넘어간다
+      state.mode = 'note';
+      state.noteDone = () => {
+        clearTimeout(state.noteTimer);
+        anims.forEach((r) => r.classList.add('done'));
+        state.mode = 'title';
+        scheduleAdvance();
+      };
+      if (state.skip) return state.noteDone();
+      state.noteTimer = setTimeout(state.noteDone, delay * 1000);
+    }
+
     function showTutorial(line) {
       box.classList.add('hidden');
+      noteLayer.classList.remove('show');
       const t = line.tutorial;
       titleCard.replaceChildren();
       titleCard.classList.add('tutorial');
@@ -450,7 +560,35 @@ Game.registerScreen('dialogue', {
         b.classList.add('dlg-choice');
         choicesLayer.appendChild(b);
       }
+      noteLayer.classList.remove('show');
       choicesLayer.classList.add('show');
+      fitChoices();
+    }
+
+    /**
+     * 선택지 글자가 종이 띠 밖으로 나가지 않게: 긴 글은 버튼이 높아지고(두 줄까지),
+     * 그래도 넘치거나 선택지 묶음이 자리보다 크면 글자를 줄인다.
+     */
+    function fitChoices() {
+      const btns = [...choicesLayer.querySelectorAll('.dlg-choice')];
+      const lines = (b) => {
+        const cs = getComputedStyle(b);
+        const inner = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+        return inner / (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3);
+      };
+      // 1) 버튼마다: 두 줄까지는 버튼이 높아지고, 그보다 길면 그 버튼의 글자를 줄인다
+      for (const b of btns) {
+        let size = 36;
+        b.style.fontSize = `${size}px`;
+        while (size > 22 && (lines(b) > 2.3 || b.scrollWidth > b.clientWidth + 1)) {
+          size -= 2;
+          b.style.fontSize = `${size}px`;
+        }
+      }
+      // 2) 선택지 묶음이 자리보다 크면 모두 조금씩 줄인다
+      for (let guard = 0; guard < 8 && choicesLayer.scrollHeight > choicesLayer.clientHeight + 1; guard++) {
+        btns.forEach((b) => { b.style.fontSize = `${Math.max(22, parseFloat(b.style.fontSize) - 2)}px`; });
+      }
     }
 
     function finish() {
@@ -477,6 +615,7 @@ Game.registerScreen('dialogue', {
     // ----- 자동 / 넘기기 -----
     function scheduleAdvance() {
       clearTimeout(timer);
+      if (state.mode === 'note' && state.skip) { state.noteDone(); return; }
       if (state.mode !== 'shown' && state.mode !== 'title') return;
       if (logOverlay) return;
       if (state.skip) {
@@ -545,6 +684,7 @@ Game.registerScreen('dialogue', {
         return;
       }
       if (state.mode === 'typing') completeLine();
+      else if (state.mode === 'note') state.noteDone();
       else if (state.mode === 'shown' || state.mode === 'title') proceed();
     }
 

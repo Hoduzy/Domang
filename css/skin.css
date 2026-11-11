@@ -729,3 +729,69 @@ input[type=range]::-moz-range-thumb {
 .bt-hud-right .bt-panel { min-height: 0; }
 /* 차례표: 적 머리 위 정보 상자와 겹치지 않게 왼쪽 위로 */
 .bt-timeline { left: 30px; transform: none; }
+
+/* ===== 선택지: 종이 띠(투명하지 않은 영역 y 17~279, x 14~2026) 가운데에 글자 =====
+ * 그림 314px 높이 기준 9분할: 위 70 / 아래 88(그림자 포함) / 왼쪽 300(구멍·세모) / 오른쪽 302.
+ * 위·아래, 왼쪽·오른쪽 여백의 중심이 종이의 중심과 같아서 글자가 종이 정가운데에 온다. 표시 배율 0.3185 */
+.dlg-choices { gap: 34px; padding: 10px 0; }
+.btn.dlg-choice {
+  border-image: url("../assets/ui/ui_choice_button.png") 70 302 88 300 fill / 22.3px 96.2px 28px 95.5px stretch !important;
+  border-width: 22.3px 96.2px 28px 95.5px !important;
+  min-height: 100px;
+  height: auto;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+  font-size: 36px;
+  flex: 0 0 auto;
+}
+
+/* ===== 대화 스탠딩: 크게, 머리는 위 7%, 허벅지 아래는 대사창 뒤 ===== */
+.dlg-chars { inset: 0 0 86px; height: auto; display: block; overflow: hidden; } /* 대사창 아래 여백으로 다리가 비치지 않게 */
+.dlg-actor { position: absolute; top: 0; left: 50%; width: 0; height: 100%; transition: left 0.35s ease; animation: dlg-fade 0.25s ease-out; }
+.dlg-actor-body {
+  position: absolute; left: 0; top: 0; width: 0; height: 100%;
+  transform-origin: 0 760px; transition: transform 0.22s ease, filter 0.22s ease;
+}
+.dlg-actor.dim .dlg-actor-body { filter: brightness(0.62) saturate(0.85); }
+.dlg-actor.speaking { z-index: 2; }
+.dlg-actor.speaking .dlg-actor-body { transform: scale(1.035); }
+/* 말을 시작할 때 아주 살짝 통통 (transform 과 따로 노는 translate 로) */
+.dlg-actor-body.bounce { animation: dlg-bounce 0.38s ease-out; }
+@keyframes dlg-bounce { 0% { translate: 0 0; } 30% { translate: 0 -14px; } 60% { translate: 0 0; } 80% { translate: 0 -5px; } 100% { translate: 0 0; } }
+.dlg-st-img { position: absolute; left: 0; top: 0; }
+.dlg-st-img > img { position: absolute; display: block; max-width: none; pointer-events: none; }
+/* 표정이 바뀔 때: 새 그림을 위에 짧게 겹쳐 나타나게 */
+.dlg-st-img.swap-in { animation: dlg-swap 0.22s ease-out; }
+@keyframes dlg-swap { from { opacity: 0; } to { opacity: 1; } }
+.dlg-st-img.failed .pic { position: absolute; left: -260px; top: 76px; width: 520px; height: 960px; }
+
+/* ===== 메모 장면: ui_door_note 위에 손글씨 =====
+ * 메모지 1037×1347, 표시 높이 800 (배율 0.5939). 공책 줄은 87.4px 간격, 오른쪽으로 갈수록 올라가는 -4.9° 기울기,
+ * x 170 지점의 첫 줄이 y 254. 글자 층을 그 기울기로 돌리고 줄 간격에 맞춘다 */
+.dlg-note-layer { position: absolute; inset: 0; z-index: 4; display: none; align-items: center; justify-content: center; pointer-events: none; }
+.dlg-note-layer.show { display: flex; }
+.dlg-note {
+  position: relative; width: 616px; height: 800px; margin-top: -20px;
+  background: url("../assets/ui/ui_door_note.png") center / 100% 100% no-repeat;
+  transform: rotate(2.5deg);
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.45));
+  animation: dlg-note-in 0.45s cubic-bezier(.2, .8, .3, 1);
+}
+@keyframes dlg-note-in { from { opacity: 0; transform: rotate(6deg) translateY(30px) scale(0.96); } }
+.dlg-note-lines {
+  position: absolute; left: 101px; top: 99px; width: 481px;
+  transform: rotate(-4.9deg); transform-origin: 0 51.9px;
+  font-family: var(--font-hand); font-size: 50px; line-height: 1; color: #2c3778;
+}
+.dlg-note-line { height: 51.9px; display: flex; align-items: flex-end; padding: 0 0 5px 6px; white-space: nowrap; }
+.dlg-note-line.write { clip-path: inset(0 100% 0 0); animation: dlg-write var(--t, 1s) linear var(--d, 0s) forwards; }
+.dlg-note-line.write.done { animation: none; clip-path: none; }
+.dlg-note-line.added { color: #b03a55; }
+@keyframes dlg-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
