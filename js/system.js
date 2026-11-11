@@ -17,6 +17,7 @@ function supportBox(className = '') {
 Game.registerScreen('notice', {
   title: '주제 안내',
   hideTitle: true,
+  background: 'bg_notice',
   render(s) {
     s.body.classList.add('notice-body');
     s.body.appendChild(supportBox('large'));

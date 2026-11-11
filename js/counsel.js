@@ -253,7 +253,11 @@ Game.registerScreen('counsel', {
 
       // 머리말
       const head = el('div', 'cn-head');
-      head.appendChild(el('div', 'cn-day', `${c.name} · ${run.day}일째 / ${C.days}`));
+      // 날짜: ui_day_counter (탁상 달력) 위에 숫자
+      const cal = el('div', 'cn-calendar');
+      cal.append(el('span', 'cn-cal-day', String(run.day)), el('span', 'cn-cal-total', `/ ${C.days}일`));
+      area.appendChild(cal);
+      head.appendChild(el('div', 'cn-day', `${josa(c.name, '과', '와')}의 방과후`));
       const info = el('div', 'cn-info');
       info.appendChild(el('span', `cn-cap ${run.cap}`, `최대 ${GRADE_LABEL[run.cap]}`));
       info.appendChild(el('span', 'cn-rate', `성장률 ×${run.rate}${Counsel.slowed(run) ? ` → ×${run.rate * C.penalty.slowRate} (성장 둔화)` : ''}`));
@@ -274,7 +278,9 @@ Game.registerScreen('counsel', {
       for (const st of C.stats) {
         const v = run.stats[st.id];
         const row = el('div', `cn-stat ${st.id}`);
-        row.appendChild(el('span', 'cn-stat-name', st.name));
+        const nm = el('span', 'cn-stat-name');
+        nm.append(Assets.icon(`stat_${st.id}`, 'cn-stat-icon'), el('span', null, st.name));
+        row.appendChild(nm);
         const track = el('div', 'cn-track');
         const fill = el('i');
         fill.style.width = `${v}%`;
@@ -296,6 +302,7 @@ Game.registerScreen('counsel', {
       const right = el('div', 'cn-right');
       const pv = Counsel.preview(plan, rec.level);
       const staminaRow = el('div', 'cn-stamina');
+      staminaRow.appendChild(Assets.icon('stat_stamina', 'cn-stat-icon'));
       staminaRow.appendChild(el('span', 'cn-stamina-label', `체력 (레벨 구간 ${Counsel.band(rec.level).name} · 한 칸 ${Counsel.band(rec.level).cost}%)`));
       const sTrack = el('div', 'cn-stamina-track');
       pv.forEach((p) => {
@@ -306,6 +313,11 @@ Game.registerScreen('counsel', {
       staminaRow.appendChild(sTrack);
       right.appendChild(staminaRow);
 
+      // 시간표: ui_timetable 코르크판의 5×3 칸에 포스트잇(ui_tile)을 붙인다
+      const board = el('div', 'cn-timetable');
+      board.appendChild(el('div', 'cn-tt-title', '오늘의 시간표'));
+      const COLS = [12.5, 27.5, 42.5, 57.5, 72.6, 87.5];
+      const ROWS = [26.9, 45.1, 63.4, 81.8];
       const grid = el('div', 'cn-grid');
       pv.forEach((p, i) => {
         const slot = Game.button('', () => {
@@ -320,12 +332,19 @@ Game.registerScreen('counsel', {
         if (p.empty) slot.classList.add('empty');
         if (p.act.id === pref.favorite) slot.classList.add('fav');
         slot.dataset.slot = String(i);
+        const cc = i % 5;
+        const rr = Math.floor(i / 5);
+        slot.style.left = `${COLS[cc]}%`;
+        slot.style.top = `${ROWS[rr]}%`;
+        slot.style.width = `${COLS[cc + 1] - COLS[cc]}%`;
+        slot.style.height = `${ROWS[rr + 1] - ROWS[rr]}%`;
         slot.appendChild(el('span', 'cn-slot-time', Counsel.timeLabel(i)));
         slot.appendChild(el('span', 'cn-slot-act', p.forced ? '쉬기 (지쳐서)' : p.empty ? '— (쉬기)' : p.act.name));
         slot.appendChild(el('span', 'cn-slot-stamina', `체력 ${Math.round(p.stamina)}%`));
         grid.appendChild(slot);
       });
-      right.appendChild(grid);
+      board.appendChild(grid);
+      right.appendChild(board);
 
       const palette = el('div', 'cn-palette');
       for (const a of C.activities) {
@@ -469,6 +488,7 @@ Game.registerScreen('counsel', {
       const list = el('div', 'cn-home-stats');
       for (const st of C.stats) {
         const row = el('div', 'cn-home-stat');
+        row.appendChild(Assets.icon(`stat_${st.id}`, 'cn-stat-icon'));
         row.appendChild(el('span', null, st.name));
         row.appendChild(el('span', today[st.id] < 0 ? 'down' : 'up', signed(today[st.id])));
         row.appendChild(el('span', 'cn-home-total', fmt(stats[st.id])));

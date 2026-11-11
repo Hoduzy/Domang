@@ -164,12 +164,13 @@ Game.registerScreen('room', {
     });
 
     // ----- 메뉴 -----
-    const settingsBtn = Game.button('설정', () => Game.go('settings', { from: 'room' }));
+    const settingsBtn = Game.iconButton('icon_settings', '설정', () => Game.go('settings', { from: 'room' }));
     settingsBtn.classList.add('corner-btn');
     s.root.appendChild(settingsBtn);
 
     s.addButton('타이틀로', () => Game.go('title'));
     s.addButton('출석부', () => Game.go('attendance'));
+    s.addButton('가챠', () => Game.go('gacha'));
     s.addButton('방과후 상담', () => Game.go('counsel'));
     s.addButton('캐릭터', () => Game.go('character'));
     s.addButton('장 선택', () => Game.go('chapter'), { primary: true });

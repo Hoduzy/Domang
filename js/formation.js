@@ -43,7 +43,9 @@ Game.registerScreen('formation', {
 
     if (owner) {
       const card = el('div', 'fm-card owner');
-      card.appendChild(Assets.standing(owner, 'sad', 'fm-pic'));
+      const frame = el('div', 'fm-frame');
+      frame.appendChild(Assets.standing(owner, 'sad', 'fm-pic'));
+      card.appendChild(frame);
       card.appendChild(el('div', 'fm-name', owner.name));
       card.appendChild(el('div', 'fm-owner-note', '악몽 속에 갇혀 있어요'));
       row.appendChild(card);
@@ -57,7 +59,13 @@ Game.registerScreen('formation', {
       card.type = 'button';
       card.dataset.id = c.id;
       card.appendChild(el('span', 'fm-order'));
-      card.appendChild(Assets.nightmare(c, 'fm-pic'));
+      // ui_slot_frame: 큰 창에 부원, 아래 작은 칸에 약속
+      const frame = el('div', 'fm-frame');
+      frame.appendChild(Assets.nightmare(c, 'fm-pic'));
+      const sq = el('div', 'fm-sq');
+      sq.addEventListener('click', (e) => { e.stopPropagation(); openPromisePicker(c); });
+      frame.appendChild(sq);
+      card.appendChild(frame);
       card.appendChild(el('div', 'fm-name', c.name));
       card.appendChild(el('div', 'fm-meta', `${c.role} · Lv ${rec.level}`));
       const slot = el('div', 'fm-slot');
@@ -69,7 +77,7 @@ Game.registerScreen('formation', {
       });
       card.appendChild(slot);
       card.addEventListener('click', () => toggle(c.id));
-      cards.set(c.id, { card, slot });
+      cards.set(c.id, { card, slot, sq });
       row.appendChild(card);
     }
 
@@ -78,14 +86,15 @@ Game.registerScreen('formation', {
     }
 
     function renderSlot(c) {
-      const { slot } = cards.get(c.id);
+      const { slot, sq } = cards.get(c.id);
       const pr = equippedOf(c.id);
+      sq.replaceChildren();
+      if (pr) sq.appendChild(Assets.icon(`promise_${pr.type}_${pr.grade}`, 'fm-sq-icon'));
       slot.replaceChildren(el('span', 'fm-slot-label', '약속'));
       slot.classList.toggle('empty', !pr);
       slot.classList.remove('gold', 'silver', 'bronze');
       if (pr) {
         slot.classList.add(pr.grade);
-        slot.appendChild(Assets.icon(`promise_${pr.type}_${pr.grade}`, 'fm-slot-icon'));
         slot.appendChild(el('span', 'fm-slot-name', promiseLabel(pr)));
         if (pr.line) slot.appendChild(el('span', 'fm-slot-line', `"${pr.line}"`));
       } else {

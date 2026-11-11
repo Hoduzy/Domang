@@ -185,7 +185,7 @@ Game.registerScreen('battle', {
     const cutin = el('div', 'bt-cutin');
     s.root.append(world, timeline, hud, cutin);
 
-    const retreatBtn = Game.button('후퇴', async () => {
+    const retreatBtn = Game.iconButton('icon_back', '후퇴', async () => {
       if (state.phase === 'ended') return;
       if (await Game.confirm('전투를 그만두고 나갈까요?', { ok: '후퇴' })) exit();
     });
@@ -218,7 +218,10 @@ Game.registerScreen('battle', {
       // HUD 상태 칸: 얼굴 + 이름 + 체력/흔들림/마음 + 상태 태그
       const status = el('div', 'bt-stat');
       status.style.setProperty('--c', u.color);
-      status.appendChild(Assets.face(u.data, 'bt-face'));
+      // 얼굴: ui_portrait_frame 폴라로이드 틀 안에
+      const portrait = el('div', 'bt-portrait');
+      portrait.append(Assets.face(u.data, 'bt-face'), el('span', 'bt-portrait-frame'));
+      status.appendChild(portrait);
       const info = el('div', 'bt-stat-info');
       info.appendChild(el('div', 'bt-name', u.name));
       u.ui = { card, body, status, hp: bar('hp', '체력'), shake: bar('shake', '흔들림'), heart: bar('heart', '마음'), tags: el('div', 'bt-tags') };
@@ -289,7 +292,8 @@ Game.registerScreen('battle', {
     }
 
     function setBar(b, value, max, text) {
-      b.fill.style.width = `${Math.max(0, Math.min(1, value / max)) * 100}%`;
+      // 게이지 그림은 늘이지 않고 수치만큼 잘라서 보인다 (skin.css 의 clip-path)
+      b.fill.style.setProperty('--p', `${Math.max(0, Math.min(1, value / max)) * 100}%`);
       b.value.textContent = text != null ? text : `${Math.max(0, Math.round(value))}`;
     }
 
@@ -354,15 +358,23 @@ Game.registerScreen('battle', {
       return out;
     }
 
+    // ui_turn_order 의 여섯 칸 (가로·세로 %)
+    const TURN_BOXES = [[17.4, 27.6], [29.8, 39.9], [42.1, 52.3], [54.5, 64.7], [67.0, 77.2], [79.4, 89.7]];
+
     function renderTimeline() {
       const list = [];
       if (state.actor && !state.actor.down && fieldUnits().includes(state.actor)) list.push(state.actor);
-      list.push(...upcoming(8 - list.length));
-      timeline.replaceChildren(el('span', 'bt-timeline-label', '행동 순서'));
+      list.push(...upcoming(TURN_BOXES.length - list.length));
+      timeline.replaceChildren();
       list.forEach((u, i) => {
         const chip = el('div', `bt-chip ${u.side}${i === 0 && state.actor === u ? ' now' : ''}`);
-        if (u.side === 'ally') chip.style.setProperty('--chip', u.color);
-        chip.appendChild(el('span', null, u.name));
+        chip.style.left = `${TURN_BOXES[i][0]}%`;
+        chip.style.width = `${TURN_BOXES[i][1] - TURN_BOXES[i][0]}%`;
+        if (u.side === 'ally') {
+          chip.style.setProperty('--chip', u.color);
+          chip.appendChild(Assets.face(u.data, 'bt-chip-face'));
+        }
+        chip.appendChild(el('span', 'bt-chip-name', u.name));
         timeline.appendChild(chip);
       });
     }
@@ -815,6 +827,9 @@ Game.registerScreen('battle', {
       const b = Game.button('', onClick, { disabled });
       b.classList.add('bt-action');
       if (cls) b.classList.add(cls);
+      // 모양: 스킬 카드(ui_skill_card) / 마음 스킬 카드(ui_heart_card) / 선생님·공통 명령(ui_command_button)
+      if (icon && icon.startsWith('skill_')) b.classList.add(icon.endsWith('_heart') ? 'heart-card' : 'skill-card');
+      else if ((icon && icon.startsWith('cmd_')) || cls.includes('cmd')) b.classList.add('cmd');
       if (icon) b.appendChild(Assets.icon(icon, 'bt-action-icon'));
       b.appendChild(el('span', 'bt-action-name', label));
       if (sub) b.appendChild(el('span', 'bt-action-sub', sub));
@@ -852,7 +867,7 @@ Game.registerScreen('battle', {
         { disabled: !targetsFor(a, grabSk).length, icon: 'cmd_hold' }), grabSk);
       if (hasBench) {
         add(actionButton(swapSk.name, `대기 ${livingBench().length}명`, () => choose('swap', swapSk),
-          { disabled: !targetsFor(a, swapSk).length }), swapSk);
+          { disabled: !targetsFor(a, swapSk).length, cls: 'cmd' }), swapSk);
       }
       add(actionButton(staySk.name, `선생님 ${state.stayUses}/${staySk.uses}`, () => choose('stay', staySk),
         { disabled: state.stayUses <= 0 || !targetsFor(a, staySk).length, cls: 'teacher', icon: 'cmd_stay' }), staySk);

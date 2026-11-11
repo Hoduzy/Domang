@@ -134,9 +134,9 @@ Game.registerScreen('dialogue', {
 
     if (params.heading) s.root.appendChild(el('div', 'dlg-heading', params.heading));
 
-    const autoBtn = Game.button('자동', () => setAuto(!state.auto));
-    const skipBtn = Game.button('넘기기', () => setSkip(!state.skip));
-    const logBtn = Game.button('기록', () => openLog());
+    const autoBtn = Game.iconButton('icon_auto', '자동', () => setAuto(!state.auto));
+    const skipBtn = Game.iconButton('icon_skip', '넘기기', () => setSkip(!state.skip));
+    const logBtn = Game.iconButton('icon_log', '기록', () => openLog());
     for (const b of [autoBtn, skipBtn, logBtn]) {
       b.classList.add('dlg-ctrl');
       b.setAttribute('aria-pressed', 'false');
@@ -500,7 +500,7 @@ Game.registerScreen('dialogue', {
       const panel = el('div', 'dlg-log-panel');
       const head = el('div', 'dlg-log-head');
       head.appendChild(el('h2', null, '대사 기록'));
-      head.appendChild(Game.button('닫기', closeLog, { primary: true }));
+      head.appendChild(Game.iconButton('icon_close', '닫기', closeLog));
       const list = el('div', 'dlg-log-list scrollable');
       for (const entry of state.log) {
         const item = el('div', `dlg-log-item ${entry.kind}`);

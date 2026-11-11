@@ -55,6 +55,17 @@ const Game = (() => {
     return b;
   }
 
+  /** 동그란 아이콘 버튼 (assets/ui/icon_*.png). 글자는 아이콘 아래에 */
+  function iconButton(icon, label, onClick) {
+    const b = el('button', 'icon-btn');
+    b.type = 'button';
+    b.setAttribute('aria-label', label);
+    b.appendChild(Assets.icon(icon, 'icon-btn-img'));
+    b.appendChild(el('span', 'icon-btn-label', label));
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
   /** 모든 화면의 공통 틀: 배경, 화면 이름, 본문, 아래쪽 버튼 줄 */
   function buildScreen(id, { background } = {}) {
     const def = screens[id];
@@ -273,8 +284,16 @@ const Game = (() => {
     if (window.visualViewport) window.visualViewport.addEventListener('resize', fitStage);
     setupInput();
 
+    // 로딩 화면 (bg_loading). 데이터가 금방 와도 잠깐은 보여준다
+    const loading = el('div', 'loading-screen');
+    loading.appendChild(Assets.background('bg_loading'));
+    loading.appendChild(el('div', 'loading-text', '불러오는 중…'));
+    stageEl.replaceChildren(loading);
+    const minShow = new Promise((r) => setTimeout(r, 600));
+
     try {
       await loadData();
+      await minShow;
     } catch (err) {
       console.error(err);
       showBootError(err);
@@ -285,18 +304,8 @@ const Game = (() => {
 
   return {
     STAGE_W, STAGE_H, SUPPORT_MESSAGE, data,
-    boot, go, registerScreen, buildScreen, character, cast, castByName, el, button, confirm: confirmDialog, toast,
+    boot, go, registerScreen, buildScreen, iconButton, character, cast, castByName, el, button, confirm: confirmDialog, toast,
     stageInfo, chapterLabel, chapterTitle, protagonist, playStage, completeStage, resume,
     get currentScreen() { return currentId; },
   };
 })();
-
-/* ===== 간단한 화면들 (본격적으로 만들 때 각자 파일로 분리) ===== */
-
-Game.registerScreen('attendance', {
-  title: '출석부',
-  render(s) {
-    for (const c of Game.data.characters) s.body.appendChild(Assets.nightmare(c, 'card'));
-    s.addButton('부실로', () => Game.go('room'), { primary: true });
-  },
-});

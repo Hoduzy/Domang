@@ -16,6 +16,7 @@ Game.registerScreen('chapter', {
     if (!Save.data) return;
     const { progress } = Save.data;
     s.root.classList.add('chapter');
+    s.bg.replaceChildren(Assets.background('bg_chapter_select'));
 
     const isChapterOpen = (c) => c <= progress.chapter;
     const clearedIn = (c) => new Set(progress.cleared[String(c)] || []);
@@ -65,8 +66,8 @@ Game.registerScreen('chapter', {
     }
 
     // ----- 스테이지 길 -----
-    const PATH_W = 1240;
-    const PATH_H = 470;
+    const PATH_W = 1000;
+    const PATH_H = 440;
 
     function nodePositions(count) {
       if (count <= 5) {
@@ -149,7 +150,10 @@ Game.registerScreen('chapter', {
         node.style.left = `${pts[i].x}px`;
         node.style.top = `${pts[i].y}px`;
         node.setAttribute('aria-label', `스테이지 ${st.stage} ${st.title} — ${state === 'cleared' ? '클리어' : state === 'current' ? '진행 중' : '잠김'}`);
-        node.appendChild(el('span', 'wb-node-num', state === 'cleared' ? '✓' : state === 'locked' ? '🔒' : String(st.stage)));
+        // 노드 그림: node_locked / node_current / node_cleared / node_boss (글자는 위에 올린다)
+        const img = state === 'locked' ? 'node_locked' : state === 'cleared' ? 'node_cleared' : st.type === 'boss' ? 'node_boss' : 'node_current';
+        node.appendChild(Assets.icon(img, 'wb-node-img'));
+        node.appendChild(el('span', 'wb-node-num', state === 'current' && st.type !== 'boss' ? String(st.stage) : ''));
         const label = el('span', 'wb-node-label', state === 'locked' && c > 0 ? `${st.stage}` : `${st.stage}. ${st.title}`);
         node.appendChild(label);
         path.appendChild(node);
